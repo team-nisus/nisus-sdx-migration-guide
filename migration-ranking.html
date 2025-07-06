@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migration Sıralama - RPA Dashboard</title>
+    <style>
+        * {margin:0; padding:0; box-sizing:border-box;}
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; color: #333;
+        }
+        .header {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem 0; text-align:center;
+            box-shadow:0 4px 20px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .header h1 {color:#2c3e50; font-size:2.5rem; font-weight:700; margin-bottom:0.5rem;}
+        .nav-back {
+            position: absolute; top:50%; left:2rem; transform:translateY(-50%);
+            background:#3498db; color:white; padding:0.5rem 1rem; border-radius:25px;
+            text-decoration:none; font-weight:600; transition:all 0.3s ease;
+        }
+        .nav-back:hover {background:#2980b9; transform:translateY(-50%) translateX(-5px);}
+        .container {max-width:1600px; margin:0 auto; padding:2rem;}
+        .controls-panel {
+            background:rgba(255,255,255,0.95);
+            backdrop-filter:blur(10px);
+            border-radius:15px; padding:2rem; margin-bottom:2rem;
+            box-shadow:0 8px 32px rgba(0,0,0,0.1);
+        }
+        .controls-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px,1fr));
+            gap:1.5rem; align-items:end;
+        }
+        .control-group {display:flex; flex-direction:column;}
+        .control-label {font-weight:600; color:#2c3e50; margin-bottom:0.5rem;}
+        .control-input {
+            padding:0.75rem; border:2px solid #e0e6ed; border-radius:8px;
+            font-size:1rem; transition:border-color 0.3s ease;
+        }
+        .control-input:focus {outline:none; border-color:#3498db;}
+        .btn-update {
+            background:linear-gradient(135deg, #3498db, #2980b9); color:white; border:none;
+            padding:0.75rem 2rem; border-radius:8px; font-size:1rem; font-weight:600; cursor:pointer;
+            transition:all 0.3s ease;
+        }
+        .btn-update:hover {background:linear-gradient(135deg, #2980b9, #3498db); transform:translateY(-2px);}
+        .table-container {
+            background:rgba(255,255,255,0.95); backdrop-filter:blur(10px);
+            border-radius:15px; box-shadow:0 8px 32px rgba(0,0,0,0.1); overflow:hidden;
+        }
+        .table-header {background:linear-gradient(135deg,#2c3e50,#34495e);color:white;padding:1.5rem;text-align:center;}
+        .table-header h2 {font-size:1.8rem; font-weight:700;}
+        .table-wrapper {overflow-x:auto; max-height:70vh;}
+        table {width:100%; border-collapse:collapse; font-size:0.9rem;}
+        th {
+            background:linear-gradient(135deg,#34495e,#2c3e50);color:white;padding:1rem 0.75rem;
+            text-align:left; font-weight:600; position:sticky; top:0; z-index:10;
+        }
+        td {padding:1rem 0.75rem; border-bottom:1px solid #e0e6ed; vertical-align:top;}
+        tr:hover {background:rgba(52,152,219,0.05);}
+        .priority-high {color:#e74c3c; font-weight:700;}
+        .priority-medium {color:#f39c12; font-weight:600;}
+        .priority-low {color:#2ecc71; font-weight:500;}
+        .folder-brisa {
+            background:linear-gradient(135deg, #3498db, #2980b9); color:white;
+            padding:0.25rem 0.75rem; border-radius:20px; font-size:0.8rem; font-weight:600;
+        }
+        .folder-other {
+            background:#ecf0f1; color:#2c3e50; padding:0.25rem 0.75rem; border-radius:20px; font-size:0.8rem;
+        }
+        .runtime-legacy {
+            background:#e74c3c; color:white; padding:0.25rem 0.5rem; border-radius:15px; font-size:0.8rem;
+        }
+        .runtime-modern {
+            background:#2ecc71; color:white; padding:0.25rem 0.5rem; border-radius:15px; font-size:0.8rem;
+        }
+        .effort-badge {
+            background:linear-gradient(135deg, #f39c12, #e67e22); color:white;
+            padding:0.5rem 1rem; border-radius:20px; font-weight:600; text-align:center; display:inline-block; min-width:60px;
+        }
+        .rank-number {
+            background:linear-gradient(135deg,#9b59b6,#8e44ad);color:white;
+            width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+            font-weight:700; font-size:1.1rem; margin:0 auto;
+        }
+        .last-run-recent {color:#e74c3c; font-weight:600;}
+        .last-run-old {color:#2ecc71;}
+        .last-run-none {color:#95a5a6; font-style:italic;}
+        .batch-info-panel {
+            background:rgba(255,255,255,0.95); backdrop-filter:blur(10px);
+            border-radius:15px; padding:1.5rem; margin-bottom:2rem;
+            box-shadow:0 8px 32px rgba(0,0,0,0.1);
+        }
+        .batch-summary {
+            display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+            gap:1.5rem; text-align:center;
+        }
+        .batch-item {
+            background:#f8f9fa; padding:1rem; border-radius:10px; border-left:4px solid #3498db;
+        }
+        .batch-label {display:block; font-weight:600; color:#7f8c8d; font-size:0.9rem; margin-bottom:0.5rem;}
+        .batch-value {display:block; font-size:1.5rem; font-weight:700; color:#2c3e50;}
+        .pagination-container {
+            background:#f8f9fa; padding:1.5rem; border-radius:0 0 15px 15px; border-top:1px solid #e0e6ed;
+        }
+        .pagination-controls {
+            display:flex; justify-content:center; align-items:center; gap:0.5rem; flex-wrap:wrap;
+        }
+        .pagination-btn {
+            background:white; color:#2c3e50; border:2px solid #e0e6ed;
+            padding:0.5rem 1rem; border-radius:8px; cursor:pointer; font-weight:600;
+            transition:all 0.3s ease; min-width:45px;
+        }
+        .pagination-btn:hover:not(.disabled) {background:#3498db; color:white; border-color:#3498db;}
+        .pagination-btn.active {background:#3498db; color:white; border-color:#3498db;}
+        .pagination-btn.disabled {opacity:0.5; cursor:not-allowed;}
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .controls-grid { grid-template-columns: 1fr; }
+            table { font-size: 0.8rem; }
+            th, td { padding: 0.5rem 0.25rem; }
+            .batch-summary {grid-template-columns:1fr;gap:1rem;}
+            .pagination-controls {gap:0.25rem;}
+            .pagination-btn {padding:0.4rem 0.8rem;font-size:0.9rem;}
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="index.html" class="nav-back">← Ana Sayfa</a>
+        <h1>📊 Migration Sıralama Analizi</h1>
+        <p>Süreç Migration Öncelik ve Effort Analizi</p>
+    </div>
+    <div class="container">
+        <div class="controls-panel">
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label class="control-label">Windows Legacy Effort (Gün)</label>
+                    <input type="number" id="legacyEffort" class="control-input" value="3" min="1" max="10">
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Windows Modern Effort (Gün)</label>
+                    <input type="number" id="modernEffort" class="control-input" value="2" min="1" max="8">
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Brisa Öncelik Çarpanı</label>
+                    <input type="number" id="brisaMultiplier" class="control-input" value="2" min="1" max="5" step="0.1">
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Sayfa Başı Süreç</label>
+                    <select id="processesPerPage" class="control-input" onchange="updateProcessesPerPage()">
+						<option value="10">10 Süreç</option>
+                        <option value="20">20 Süreç</option>
+                        <option value="30" selected>30 Süreç</option>
+                        <option value="40">40 Süreç</option>
+                        <option value="50">50 Süreç</option>
+                        <option value="100">100 Süreç</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <button class="btn-update" onclick="updateTable()">Tabloyu Güncelle</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="batch-info-panel" id="batchInfo"></div>
+        <div id="groupTitle" style="margin-bottom:1.2rem;font-size:1.2rem;font-weight:600;text-align:center;"></div>
+
+        <div class="table-container">
+            <div class="table-header">
+                <h2>Migration Öncelik Sıralaması</h2>
+            </div>
+            <div class="table-wrapper">
+                <table id="migrationTable">
+                    <thead>
+                        <tr>
+                            <th>Sıra</th>
+                            <th>Klasör</th>
+                            <th>Süreç Adı</th>
+                            <th>Versiyon</th>
+                            <th>Öncelik</th>
+                            <th>Çalışma Tipi</th>
+                            <th>Destek Tipi</th>
+                            <th>Son Çalışma</th>
+                            <th>Tahmini Effort</th>
+                            <th>Öncelik Skoru</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+            <div class="pagination-container">
+                <div id="paginationControls" class="pagination-controls"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+                const processData = [
+            {folder: "BriSA", process: "BriSA_28_SAPCeviriHatalariCozme", version: "1.0.80", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "BriSA_28_SAPCeviriHatalariCozme", lastRun: "9 Gün"},
+            {folder: "BriSA", process: "BriSA_54_ToyotaSiparislerininSapyeGirilmesi", version: "1.0.36", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "OE Toyota siparişlerinin girilmesi", lastRun: "9 Gün"},
+            {folder: "TemSA", process: "TemSA_03_SimVeriGirisi", version: "1.0.84", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Simülasyon verilerinin SAP'ye aktarılması", lastRun: "9 Gün"},
+            {folder: "SabanciDx", process: "SabanciDx_67_ETKKontrol", version: "1.0.14", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "SabanciDx_67_ETKKontrol", lastRun: "8 Gün"},
+            {folder: "CimSA", process: "CimSa_14_Konkordato", version: "1.0.3", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "6 Saat"},
+            {folder: "BriSA", process: "BriSA_52_TurkTraktorForecastHazirlanmasi", version: "1.0.40", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Türk Traktör Forecast Hazırlanması Projesi", lastRun: "6 Gün"},
+            {folder: "PRP", process: "Deger_05_Vknsiz_Beyanname_Edge", version: "1.0.27", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Firma tarafından mail ile gönderilen beyanname listesine göre beyanname araması yapılır. Bir beyanname için firmalar tek bir aramada kontrol edilir.", lastRun: "6 Gün"},
+            {folder: "SabanciDx", process: "SabanciDx_65_EdoksisEksiBakiyeKontrol", version: "1.0.7", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "SabanciDx_65_EdoksisEksiBakiyeKontrol", lastRun: "6 Gün"},
+            {folder: "SabanciDx", process: "03_TorunMetal_TaslakalimIhaleOlusturma", version: "1.0.25", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "03_TorunMetal_TaslakalimIhaleOlusturma", lastRun: "5 Saat"},
+            {folder: "SabanciDx", process: "EgeEndustri_02_PratisIhaleOlusturma", version: "1.0.69", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "", lastRun: "5 Saat"},
+            {folder: "Toyota", process: "Toyota_HrwebIzinOnay", version: "1.0.9", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Birinci Aşama", lastRun: "5 Saat"},
+            {folder: "BriSA", process: "BriSA_00_AylikDetayRapor", version: "1.0.12", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "aylık kuyruk raporları iletilir.", lastRun: "5 Gün"},
+            {folder: "BriSA", process: "BriSA_16_SGKIzinBilgilerininGirilmesi", version: "1.0.110", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Brisa bünyesinde yer alan çalışanların SGK üzerinden girilen izinlerinin SAP sistemine girilmesi ve izin dokümanlarının ortak alana kayıt edilmesi", lastRun: "5 Gün"},
+            {folder: "BriSA", process: "BriSA_19_BladderSatinAlma", version: "1.0.92", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "BriSA_19_BladderSatinAlma Süreci", lastRun: "5 Gün"},
+            {folder: "BriSA", process: "BriSA_22_SapFiyatKontrol", version: "1.0.26", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "BriSA_22_SapFiyatKontrol", lastRun: "5 Gün"},
+            {folder: "BriSA", process: "BriSA_32_OsatBafReferans", version: "1.0.46", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "OSAT BAF Ref süreci", lastRun: "5 Gün"},
+            {folder: "BriSA", process: "BriSA_59_MSTOngoruGuncelleme", version: "1.0.17", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "5 Gün"},
+            {folder: "CimSA", process: "CimSA_04_ZMM702GelmeyenSiparislerinGonderimi", version: "1.0.15", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "5 Gün"},
+            {folder: "CimSA", process: "CimSA_08_MalzemeDonemininAcilmasi", version: "1.0.25", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "5 Gün"},
+            {folder: "SabanciDx", process: "SabanciDx_71_FaturaKontrolDenetim", version: "1.0.10", priority: "Medium", runtime: "Unattended", support: "Windows (.net5.0 or higher)", description: "SabanciDx_71_FaturaKontrolDenetim", lastRun: "4 Gün"},
+            {folder: "TemSA", process: "TemSA_14_EbaBayiFaturalarininSAPyeAktarilmasi", version: "1.0.31", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "TemSA_14_EbaBayiFaturalarininSAPyeAktarilmasi", lastRun: "4 Gün"},
+            {folder: "BriSA", process: "BriSA_40_SevkiyatKonteynerRezervasyon", version: "1.0.196", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "BriSA_40_SevkiyatKonteynerRezervasyon", lastRun: "30 Dakika"},
+            {folder: "BriSA", process: "Brisa_63_VarisIhbariUyari_QueueAdder", version: "1.0.7", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "30 Dakika"},
+            {folder: "BriSA", process: "BriSA_40_SevkiyatKonteynerRezervasyonArkasService", version: "1.1.12", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "BriSA_40_SevkiyatKonteynerRezervasyonArkasService", lastRun: "3 Saat"},
+            {folder: "BriSA", process: "Brisa_63_VarisIhbariUyari_Performer", version: "1.0.8", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "3 Saat"},
+            {folder: "CimSA", process: "CimSa_09_Ketsis", version: "1.0.36", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "3 Saat"},
+            {folder: "SabanciDx", process: "SabancıDx_59_DxVBFaturalarininMailleOnaylanmasi", version: "1.0.9", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "SabancıDx_59_DxVBFaturalarininMailleOnaylanmasi", lastRun: "3 Saat"},
+            {folder: "SabanciDx", process: "SabancıDx_59_DxVBFaturalarininMailleOnaylanmasi_MailOnaylama", version: "1.0.30", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "SabancıDx_59_DxVBFaturalarininMailleOnaylanmasi_MailOnaylama", lastRun: "3 Saat"},
+            {folder: "Toyota", process: "Toyota_01_HrwebIzinOnayPart2", version: "1.0.6", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "İkinci Aşama", lastRun: "3 Saat"},
+            {folder: "BriSA", process: "BriSA_60_OtokarSatisFaturalariGirisi", version: "1.0.26", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Otokar Satis Faturalari Girisi", lastRun: "3 Gün"},
+            {folder: "TemSA", process: "TemSA_22_YDNavlunFaturalarininSAPyeAktarilmasi", version: "1.0.22", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "", lastRun: "3 Gün"},
+            {folder: "BriSA", process: "BriSA_03_TeminatSigortasiLimitGirisi", version: "1.0.73", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "BriSA_03_TeminatSigortasiLimitGirisi", lastRun: "21 Saat"},
+            {folder: "SabanciDx", process: "SabanciDx_56_Edoksis_Sozlesme", version: "1.0.17", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Müşteriler için sözleşme hazırlanır ve müşterilere iletilir.", lastRun: "21 Saat"},
+            {folder: "Tavuk Dünyası", process: "TavukDunyasi_07_EFatura_02", version: "0.0.17", priority: "Critical", runtime: "Unattended", support: "Windows (.net5.0 or higher)", description: "Güncel Süreç", lastRun: "20 Saat"},
+            {folder: "BriSA", process: "BriSA_17_LojistikFaturaGirisiFaturaIsleme", version: "1.0.77", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Kuyruğuna gönderilen faturaları SAP ortamında işler.", lastRun: "2 Saat"},
+            {folder: "BriSA", process: "BriSA_17_LojistikFaturaGirisiQueueAdder", version: "1.0.49", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Webservice aracılığı ile faturaları okur ve BriSA_17_LojistikFaturaGirisiFaturaIsleme süreci için hazır hale getirir.", lastRun: "2 Saat"},
+            {folder: "BriSA", process: "BriSA_40_SevkiyatKonteynerRezervasyonArkasWorker", version: "1.1.8", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "BriSA_40_SevkiyatKonteynerRezervasyonArkasWorker", lastRun: "2 Saat"},
+            {folder: "BriSA", process: "BriSA_27_OEFirmaSiparislerininGirilmesi", version: "1.0.71", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "BriSA_27_OEFirmaSiparislerininGirilmesi", lastRun: "2 Gün"},
+            {folder: "BriSA", process: "BriSA_33_ExtruderParametreGuncelleme", version: "1.0.127", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Excel olarak alınan kodlar üzerinden Brisa Lastik Tanım Sistemi'nde ilgili sayfalardan alanların güncellenmesi", lastRun: "2 Gün"},
+            {folder: "BriSA", process: "BriSA_41_MikserParametreDegisikligi", version: "1.0.67", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "BriSA_41_MikserParametreGuncelleme", lastRun: "2 Gün"},
+            {folder: "BriSA", process: "BriSA_44_GIBTebligatAlimiVeGonderimi", version: "1.0.171", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "2 Gün"},
+            {folder: "BriSA", process: "BriSA_48_OE_Satis_Faturalarinin_Girilmesi", version: "1.0.68", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "OE_Satis_Faturalarinin_Girilmesi", lastRun: "2 Gün"},
+            {folder: "BriSA", process: "BriSA_53_OsatTeklifYaratma", version: "1.0.8", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "OSAT Sistemindeki Tekliflerin Yaratılması ve İlgililere Bilgildirme Maili Atma", lastRun: "2 Gün"},
+            {folder: "BriSA", process: "Brisa_62_LojistikRotaTarihiGuncelleme", version: "1.0.28", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "2 Gün"},
+            {folder: "BriSA", process: "Brisa_65_HammaddeFiyatGuncelleme", version: "1.0.15", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "2 Gün"},
+            {folder: "CimSA", process: "CimSA_01_PratisIhaleAcma", version: "1.0.98", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Pratis sayfasında ihale acma", lastRun: "2 Gün"},
+            {folder: "CimSA", process: "CimSa_12_EmniyetIseGiris", version: "1.0.13", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "2 Gün"},
+            {folder: "CimSA", process: "CimSa_13_EmniyetIstenCikis", version: "1.0.7", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "2 Gün"},
+            {folder: "SabanciDx", process: "SabanciDx54_HrWebIstenCikis", version: "1.0.11", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "SabanciDx54_HrWebIstenCikis", lastRun: "2 Gün"},
+            {folder: "SabanciDx", process: "SabanciDx55_Yakit_Asim", version: "1.0.39", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "N/A", lastRun: "2 Gün"},
+            {folder: "TemSA", process: "TemSA_01_SigortaPoliceleriGirisVeGiderlestirme", version: "1.0.30", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "PDF olarak gelen sigorta poliçelerinin, SAP tarafına girişi ve giderleştirmesi yapılması işlemleri.", lastRun: "2 Gün"},
+            {folder: "TemSA", process: "TemSA_13_Navlun_Faturalarinin_Muhasebelestirilmesi", version: "1.0.30", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "2 Gün"},
+            {folder: "TemSA", process: "TemSA_19_TNT_Nakliye_Faturalarinin_Muhasebelestirilmesi", version: "1.0.44", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "2 Gün"},
+            {folder: "TemSA", process: "TemSA_20_MaliRiskAnalizi", version: "1.0.39", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "2 Gün"},
+            {folder: "TemSA", process: "TemSA_21_OctetDogrudanBorclandirma", version: "1.0.42", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "TemSA_21_OctetDogrudanBorclandirma", lastRun: "2 Gün"},
+            {folder: "SabanciDx", process: "TorunMetal_01_SozlesmeliSiparislerinYaratilmasi", version: "1.0.120", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Sözleşmeli Satınalma Taleplerinin Siparişe Dönüştürülmesi", lastRun: "18 Saat"},
+            {folder: "SabanciDx", process: "TorunMetal_02_Kaplama", version: "1.0.28", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "", lastRun: "17 Saat"},
+            {folder: "SDX_TestOtomasyonu", process: "SabanciDx_Perfx_02_Hedef_Ekleme_Yuzde", version: "1.0.32", priority: "Medium", runtime: "Unattended", support: "Windows (.net5.0 or higher)", description: "SabanciDx_Perfx_02_Hedef_Ekleme_Yuzde", lastRun: "16 Saat"},
+            {folder: "SabanciDx", process: "SabanciDx_60_HrWebSMTicketOlusturma", version: "1.0.29", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "SabanciDx_60_HrWebSMTicketOlusturma", lastRun: "16 Gün"},
+            {folder: "SDX_TestOtomasyonu", process: "SabanciDx_Perfx_03_Admin_Ekranina_Gecis", version: "1.0.30", priority: "Medium", runtime: "Unattended", support: "Windows (.net5.0 or higher)", description: "SabanciDx_Perfx_03_Admin_Ekranina_Gecis", lastRun: "15 Saat"},
+            {folder: "SDX_TestOtomasyonu", process: "SabanciDx_Perfx_05_Profil_Goruntuleme", version: "1.0.26", priority: "Medium", runtime: "Unattended", support: "Windows (.net5.0 or higher)", description: "SabanciDx_Perfx_05_Profil_Goruntuleme", lastRun: "15 Saat"},
+            {folder: "SDX_TestOtomasyonu", process: "SabanciDx_Perfx_06_Gorusme_Talebi", version: "1.0.26", priority: "Medium", runtime: "Unattended", support: "Windows (.net5.0 or higher)", description: "SabanciDx_Perfx_06_Gorusme_Talebi", lastRun: "15 Saat"},
+            {folder: "SDX_TestOtomasyonu", process: "SabanciDx_Perfx_07_LogIn_LogOut", version: "1.0.27", priority: "Medium", runtime: "Unattended", support: "Windows (.net5.0 or higher)", description: "SabanciDx_Perfx_07_LogIn_LogOut", lastRun: "15 Saat"},
+            {folder: "SDX_TestOtomasyonu", process: "SabanciDx_Perfx_10_Yonetici_Ekibim_Toggle", version: "1.0.26", priority: "Medium", runtime: "Unattended", support: "Windows (.net5.0 or higher)", description: "SabanciDx_Perfx_10_Yonetici_Ekibim_Toggle", lastRun: "15 Saat"},
+            {folder: "SDX_TestOtomasyonu", process: "SabanciDx_Perfx_11_Yonetici_Ekibim_BagliCalisan", version: "1.0.26", priority: "Medium", runtime: "Unattended", support: "Windows (.net5.0 or higher)", description: "SabanciDx_Perfx_11_Yonetici_Ekibim_BagliCalisan", lastRun: "15 Saat"},
+            {folder: "SDX_TestOtomasyonu", process: "SabanciDx_Perfx_19_Gorev_Ekleme_ve_Silme", version: "1.0.26", priority: "Medium", runtime: "Unattended", support: "Windows (.net5.0 or higher)", description: "SabanciDx_Perfx_19_Gorev_Ekleme_ve_Silme", lastRun: "15 Saat"},
+            {folder: "SDX_TestOtomasyonu", process: "SabanciDx_Perfx_21_Hedef_Ekleme_Tarih_Azalan", version: "1.0.32", priority: "Medium", runtime: "Unattended", support: "Windows (.net5.0 or higher)", description: "Blank Process", lastRun: "15 Saat"},
+            {folder: "SabanciDx", process: "Nisus | Müşteri Yorumları Yönetimi", version: "1.0.17", priority: "Medium", runtime: "Unattended", support: "Windows (.net5.0 or higher)", description: "SabancıDX ürünlerine dair internette yapılmış şikayet ve yorumları toplayan ve analiz eden robotik süreç.", lastRun: "15 Saat"},
+            {folder: "BriSA", process: "BriSA_14_VORGunlukOzurRaporu", version: "1.0.91", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "vor gunluk ozur raporu sureci", lastRun: "14 Saat"},
+            {folder: "BriSA", process: "BriSA_31_SGKIstenCikis", version: "1.0.53", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "14 Saat"},
+            {folder: "BriSA", process: "BriSA_35_MalzemeKaynakliHurda", version: "1.0.77", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Malzeme kaynaklı hurda sürecidir.", lastRun: "14 Saat"},
+            {folder: "BriSA", process: "BriSA_42_EnerjiTuketimTakibiAnalizi", version: "1.0.257", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "14 Saat"},
+            {folder: "CimSA", process: "CimSa_11_SgkIstenCikis", version: "1.0.43", priority: "High", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "14 Saat"},
+            {folder: "SDX_TestOtomasyonu", process: "SabanciDx_Perfx_01_Yeni_Admin_Ekranina_Gecis", version: "1.0.26", priority: "Medium", runtime: "Unattended", support: "Windows (.net5.0 or higher)", description: "Yeni_Admin_Ekranina_Gecis", lastRun: "14 Saat"},
+            {folder: "SDX_TestOtomasyonu", process: "SabanciDx_Perfx_04_Admin_Panel_Hedef_Kutuphanesi", version: "1.0.29", priority: "Medium", runtime: "Unattended", support: "Windows (.net5.0 or higher)", description: "SabanciDx_Perfx_04_Admin_Panel_Hedef_Kutuphanesi", lastRun: "14 Saat"},
+            {folder: "SDX_TestOtomasyonu", process: "SabanciDx_Perfx_16_Hedef_Girme_BosAlan", version: "1.0.26", priority: "Medium", runtime: "Unattended", support: "Windows (.net5.0 or higher)", description: "SabanciDx_Perfx_16_Hedef_Girme_BosAlan", lastRun: "14 Saat"},
+            {folder: "BriSA", process: "BriSA_36_NicheSKUCycleMng", version: "1.0.106", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "BriSA_36_NicheSKUCycleMng", lastRun: "13 Saat"},
+            {folder: "BriSA", process: "BriSA_45_GunlukHamLastikKontrolu", version: "1.0.45", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Brisa akıllı portalda günlük ham lastik kontrolü raporunu oluşturma süreci", lastRun: "13 Saat"},
+            {folder: "BriSA", process: "BriSA_01_SapFiyatGirisi", version: "1.0.36", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "BriSA_01_SapFiyatGirisi", lastRun: "11 Gün"},
+            {folder: "SabanciDx", process: "Sabancidx_62_IseAlimSMTicketOlusturma", version: "1.0.22", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Sabancidx_62_IseAlimSMTicketOlusturma", lastRun: "11 Gün"},
+            {folder: "PRP", process: "Deger_06_Luca_Bordrolama", version: "1.0.36", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "10 Gün"},
+            {folder: "CimSA", process: "CimSa_10_SgkIseGiris", version: "1.0.31", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "1 Saat"},
+            {folder: "SabanciDx", process: "EgeEndüstri_01_PratisIhaleKazandırmaVeSiparisOlusturma", version: "1.0.124", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "1 Saat"},
+            {folder: "BriSA", process: "BriSA_49_MevduatKayitIslemleri", version: "1.0.50", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Mevduat Kayit İşlemleri", lastRun: "1 Gün"},
+            {folder: "BriSA", process: "BriSA_49_MevduatKayitIslemleri2", version: "1.0.48", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Mevduat Kayit İşlemleri2", lastRun: "1 Gün"},
+            {folder: "CimSA", process: "CimSA_02_PratisKatalogOnay", version: "1.0.50", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "1 Gün"},
+            {folder: "CimSA", process: "CimSA_03_SAPdePratisSiparisiOlusturma", version: "1.0.16", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Robotic Enterprise Framework", lastRun: "1 Gün"},
+            {folder: "PRP", process: "Queue_Report", version: "1.0.15", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "reports", lastRun: "1 Gün"},
+            {folder: "SabanciDx", process: "SabanciDx_63_IstenCikisSMTicketOlusturma", version: "1.0.13", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "SabanciDx_63_IstenCikisSMTicketOlusturma", lastRun: "1 Gün"},
+            {folder: "Tavuk Dünyası", process: "TavukDunyasi_06_EArsivFatura", version: "2025.4.4.1", priority: "Medium", runtime: "Unattended", support: "Windows (.net5.0 or higher)", description: "TavukDunyasi_06_EArsivFatura", lastRun: "1 Gün"},
+            {folder: "Tavuk Dünyası", process: "TavukDunyasi_06_EArsivFatura_Yeni", version: "1.0.18", priority: "Medium", runtime: "Unattended", support: "Windows (.net5.0 or higher)", description: "Robotic Enterprise Framework", lastRun: "1 Gün"},
+            {folder: "TemSA", process: "TemSA_15_Navlun_Bedellerinin_Hesaplanmasi", version: "1.0.32", priority: "Medium", runtime: "Unattended", support: "Windows - Legacy (.net461)", description: "Navlun Bedellerinin Hesaplanması", lastRun: "1 Gün"}
+        ];
+
+        let currentPage = 1;
+        let processesPerPage = 30;
+        let sortedProcesses = [];
+
+        function calculatePriorityScore(process, legacyEffort, modernEffort, brisaMultiplier) {
+            let score = 0;
+            if (process.folder === "BriSA") score += 100 * brisaMultiplier;
+            else score += 50;
+            if (process.priority === "Critical") score += 100;
+            else if (process.priority === "High") score += 80;
+            else if (process.priority === "Medium") score += 60;
+            else score += 40;
+            if (process.lastRun !== "YOK") {
+                if (process.lastRun.includes("Saat")) score += 90;
+                else if (process.lastRun.includes("Dakika")) score += 95;
+                else if (process.lastRun.includes("Gün")) {
+                    const days = parseInt(process.lastRun);
+                    if (days <= 7) score += 80;
+                    else if (days <= 30) score += 60;
+                    else score += 40;
+                }
+            } else score += 20;
+            const versionParts = process.version.split('.');
+            const versionScore = parseInt(versionParts[2]) || 0;
+            score += Math.min(versionScore, 50);
+            return score;
+        }
+
+        function getEffort(supportType, legacyEffort, modernEffort) {
+            if (supportType.includes("Legacy")) return legacyEffort;
+            else if (supportType.includes("Windows (.net5.0")) return modernEffort;
+            return legacyEffort;
+        }
+
+        function updateProcessesPerPage() {
+            processesPerPage = parseInt(document.getElementById('processesPerPage').value);
+            currentPage = 1;
+            updateTable();
+        }
+
+        function changePage(direction) {
+            const totalPages = Math.ceil(sortedProcesses.length / processesPerPage);
+            if (direction === 'prev' && currentPage > 1) currentPage--;
+            else if (direction === 'next' && currentPage < totalPages) currentPage++;
+            updateTable();
+        }
+
+        function goToPage(page) {
+            const totalPages = Math.ceil(sortedProcesses.length / processesPerPage);
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                updateTable();
+            }
+        }
+
+        function updateTable() {
+            const legacyEffort = parseInt(document.getElementById('legacyEffort').value);
+            const modernEffort = parseInt(document.getElementById('modernEffort').value);
+            const brisaMultiplier = parseFloat(document.getElementById('brisaMultiplier').value);
+
+            sortedProcesses = processData.map(process => ({
+                ...process,
+                score: calculatePriorityScore(process, legacyEffort, modernEffort, brisaMultiplier),
+                effort: getEffort(process.support, legacyEffort, modernEffort)
+            })).sort((a, b) => b.score - a.score);
+
+            const totalPages = Math.ceil(sortedProcesses.length / processesPerPage);
+            const startIndex = (currentPage - 1) * processesPerPage;
+            const endIndex = startIndex + processesPerPage;
+            const currentProcesses = sortedProcesses.slice(startIndex, endIndex);
+
+            document.getElementById('groupTitle').textContent =
+                `${currentPage}. grup çalışması migration süreçleri`;
+
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            currentProcesses.forEach((process, index) => {
+                const row = document.createElement('tr');
+                const globalIndex = startIndex + index + 1;
+                const priorityClass = process.priority === 'Critical' ? 'priority-high' : 
+                    process.priority === 'High' ? 'priority-high' :
+                    process.priority === 'Medium' ? 'priority-medium' : 'priority-low';
+                const folderClass = process.folder === 'BriSA' ? 'folder-brisa' : 'folder-other';
+                const runtimeClass = process.support.includes('Legacy') ? 'runtime-legacy' : 'runtime-modern';
+                const lastRunClass = process.lastRun === 'YOK' ? 'last-run-none' :
+                    process.lastRun.includes('Saat') || process.lastRun.includes('Dakika') || (process.lastRun.includes('Gün') && parseInt(process.lastRun) <= 7) ? 'last-run-recent' :
+                    'last-run-old';
+                row.innerHTML = `
+                    <td><div class="rank-number">${globalIndex}</div></td>
+                    <td><span class="${folderClass}">${process.folder}</span></td>
+                    <td>${process.process}</td>
+                    <td>${process.version}</td>
+                    <td><span class="${priorityClass}">${process.priority}</span></td>
+                    <td>${process.runtime}</td>
+                    <td><span class="${runtimeClass}">${process.support.includes('Legacy') ? 'Legacy' : 'Modern'}</span></td>
+                    <td><span class="${lastRunClass}">${process.lastRun}</span></td>
+                    <td><span class="effort-badge">${process.effort} Gün</span></td>
+                    <td><strong>${Math.round(process.score)}</strong></td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            updatePaginationControls(totalPages);
+            updateBatchInfo();
+        }
+
+        function updatePaginationControls(totalPages) {
+            const paginationContainer = document.getElementById('paginationControls');
+            paginationContainer.innerHTML = '';
+            const prevBtn = document.createElement('button');
+            prevBtn.textContent = '← Önceki';
+            prevBtn.className = `pagination-btn ${currentPage === 1 ? 'disabled' : ''}`;
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.onclick = () => changePage('prev');
+            paginationContainer.appendChild(prevBtn);
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.textContent = i;
+                pageBtn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
+                pageBtn.onclick = () => goToPage(i);
+                paginationContainer.appendChild(pageBtn);
+            }
+            const nextBtn = document.createElement('button');
+            nextBtn.textContent = 'Sonraki →';
+            nextBtn.className = `pagination-btn ${currentPage === totalPages ? 'disabled' : ''}`;
+            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.onclick = () => changePage('next');
+            paginationContainer.appendChild(nextBtn);
+        }
+
+        function updateBatchInfo() {
+            const totalProcesses = sortedProcesses.length;
+            const startIndex = (currentPage - 1) * processesPerPage + 1;
+            const endIndex = Math.min(currentPage * processesPerPage, totalProcesses);
+            const totalPages = Math.ceil(totalProcesses / processesPerPage);
+
+            const batchInfo = document.getElementById('batchInfo');
+            batchInfo.innerHTML = `
+                <div class="batch-summary">
+                    <div class="batch-item">
+                        <span class="batch-label">Gösterilen:</span>
+                        <span class="batch-value">${startIndex}-${endIndex} / ${totalProcesses}</span>
+                    </div>
+                    <div class="batch-item">
+                        <span class="batch-label">Sayfa:</span>
+                        <span class="batch-value">${currentPage} / ${totalPages}</span>
+                    </div>
+                    <div class="batch-item">
+                        <span class="batch-label">Migration Batch:</span>
+                        <span class="batch-value">${currentPage}. Parti</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        document.addEventListener('DOMContentLoaded', updateTable);
+    </script>
+</body>
+</html>

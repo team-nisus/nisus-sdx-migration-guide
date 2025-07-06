@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Makine Analizi - RPA Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem 0;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-back {
+            position: absolute;
+            top: 50%;
+            left: 2rem;
+            transform: translateY(-50%);
+            background: #3498db;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .nav-back:hover {
+            background: #2980b9;
+            transform: translateY(-50%) translateX(-5px);
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-card.critical { border-left: 5px solid #e74c3c; }
+        .summary-card.warning { border-left: 5px solid #f39c12; }
+        .summary-card.good { border-left: 5px solid #2ecc71; }
+
+        .summary-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-label {
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+
+        .table-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .table-header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .table-header h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 80vh;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th {
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+            color: white;
+            padding: 1rem 0.5rem;
+            text-align: center;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-size: 0.8rem;
+        }
+
+        td {
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid #e0e6ed;
+            text-align: center;
+            vertical-align: middle;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-height: 50px;
+        }
+
+        tr:hover {
+            background: rgba(52, 152, 219, 0.05);
+        }
+
+        .machine-name {
+            font-weight: 700;
+            color: #2c3e50;
+            background: #ecf0f1;
+            padding: 0.5rem;
+            border-radius: 8px;
+        }
+
+        .status-good {
+            background: #2ecc71;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+            display: inline-block;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .status-warning {
+            background: #f39c12;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+            display: inline-block;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .status-critical {
+            background: #e74c3c;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+            display: inline-block;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .app-type {
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+            display: inline-block;
+            min-width: 70px;
+            text-align: center;
+        }
+
+        .app-uipath {
+            background: #3498db;
+            color: white;
+        }
+
+        .app-blueprism {
+            background: #9b59b6;
+            color: white;
+        }
+
+        .machine-type {
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+            display: inline-block;
+            min-width: 70px;
+            text-align: center;
+        }
+
+        .type-robot {
+            background: #27ae60;
+            color: white;
+        }
+
+        .type-developer {
+            background: #2980b9;
+            color: white;
+        }
+
+        .version-badge {
+            background: #95a5a6;
+            color: white;
+            padding: 0.2rem 0.4rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            display: inline-block;
+            margin: 0.1rem;
+            white-space: nowrap;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .version-ok {
+            background: #2ecc71;
+        }
+
+        .version-outdated {
+            background: #e74c3c;
+        }
+
+        .legend {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .legend h3 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .issues-summary {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .issues-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .issue-category {
+            border-left: 4px solid #e74c3c;
+            padding: 1rem;
+            background: #fff5f5;
+            border-radius: 8px;
+        }
+
+        .issue-category h4 {
+            color: #e74c3c;
+            margin-bottom: 0.5rem;
+        }
+
+        .issue-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .issue-list li {
+            padding: 0.25rem 0;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            table { font-size: 0.7rem; }
+            th, td { padding: 0.5rem 0.25rem; }
+            .summary-cards { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="index.html" class="nav-back">← Ana Sayfa</a>
+        <h1>🖥️ Makine Analizi Dashboard</h1>
+        <p>Robot Makinelerinin Donanım ve Yazılım Durumu Analizi</p>
+    </div>
+
+    <div class="container">
+        <div class="summary-cards">
+            <div class="summary-card critical">
+                <div class="summary-number" style="color: #e74c3c;">5</div>
+                <div class="summary-label">Kritik Durum</div>
+            </div>
+            <div class="summary-card warning">
+                <div class="summary-number" style="color: #f39c12;">4</div>
+                <div class="summary-label">Uyarı Durumu</div>
+            </div>
+            <div class="summary-card good">
+                <div class="summary-number" style="color: #2ecc71;">3</div>
+                <div class="summary-label">İyi Durum</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-number" style="color: #3498db;">12</div>
+                <div class="summary-label">Toplam Makine</div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <h3>Durum Kriterleri</h3>
+            <div class="legend-grid">
+                <div class="legend-item">
+                    <span class="status-good">İyi</span>
+                    <span>RAM ≥16GB, CPU ≥4, Disk ≥30GB boş</span>
+                </div>
+                <div class="legend-item">
+                    <span class="status-warning">Orta</span>
+                    <span>RAM 8-16GB, CPU 2-4, Disk 20-30GB boş</span>
+                </div>
+                <div class="legend-item">
+                    <span class="status-critical">Kötü</span>
+                    <span>RAM <8GB, CPU <2, Disk <20GB boş</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header">
+                <h2>Makine Detay Analizi</h2>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Makine</th>
+                            <th>IP</th>
+                            <th>RPA App</th>
+                            <th>Tip</th>
+                            <th>RAM</th>
+                            <th>CPU</th>
+                            <th>OS</th>
+                            <th>Uptime</th>
+                            <th>Disk</th>
+                            <th>Boş Disk</th>
+                            <th>UiPath</th>
+                            <th>Chrome</th>
+                            <th>Edge</th>
+                            <th>SAP</th>
+                            <th>Office</th>
+                            <th>Genel Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody id="machineTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="issues-summary">
+            <h3 style="color: #2c3e50; text-align: center; margin-bottom: 1rem;">Tespit Edilen Sorunlar</h3>
+            <div class="issues-grid">
+                <div class="issue-category">
+                    <h4>🔧 Donanım Sorunları</h4>
+                    <ul class="issue-list">
+                        <li>• BIMSHSRBTVWBP24: 8GB RAM (Yetersiz)</li>
+                        <li>• BIMSHSRBTVWBP25: 0 CPU bilgisi eksik</li>
+                        <li>• BIMSHSRBTUPA04: 7 gün uptime (Çok düşük)</li>
+                        <li>• BIMSHSDEVUPA02: 5 gün uptime (Düşük)</li>
+                        <li>• BIMSHSRBTVWBP24: 11GB boş disk (Az)</li>
+                        <li>• BIMSHSDEVUPA06: 10GB boş disk (Az)</li>
+                        <li>• BIMSHSDEVUPA07: 8GB boş disk (Kritik)</li>
+                    </ul>
+                </div>
+                <div class="issue-category">
+                    <h4>💻 Yazılım Uyumsuzlukları</h4>
+                    <ul class="issue-list">
+                        <li>• BIMSHSDEVUPA02: Chrome Türkçe (İngilizce olmalı)</li>
+                        <li>• BIMSHSDEVUPA06: SAP Türkçe (İngilizce olmalı)</li>
+                        <li>• BIMSHSDEVUPA07: SAP Türkçe (İngilizce olmalı)</li>
+                        <li>• BIMSHSRBTVWBP24: Chrome Türkçe (İngilizce olmalı)</li>
+                        <li>• Office versiyon çeşitliliği (2016/2019/2021)</li>
+                        <li>• UiPath versiyon tutarsızlıkları (2023/2024)</li>
+                        <li>• BIMSHSDEVUPA07: Beta versiyon kullanımı</li>
+                    </ul>
+                </div>
+                <div class="issue-category">
+                    <h4>⚙️ Yapılandırma Sorunları</h4>
+                    <ul class="issue-list">
+                        <li>• BIMSHSDEVUPA07: Orchestrator bağlantısı yok</li>
+                        <li>• Oracle client eksik: BIMSHSRBTUPA05, BIMSHSRBTVWBP24, BIMSHSDEVUPA06, BIMSHSDEVUPA07</li>
+                        <li>• OS standardizasyon: Server 2016 vs Windows 10</li>
+                        <li>• BluePrism vs UiPath platform farklılığı</li>
+                        <li>• Orchestrator bağlantı tipleri (Client ID vs Machine Key)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+		const machineData = [
+    {
+        hostname: "BIMSHSRBTVWBP25",
+        ip: "10.145.8.76",
+        app: "BluePrism",
+        type: "Developer",
+        ram: "16 GB",
+        cpu: "0",
+        os: "Windows Server 2016 Standard 64 Bit",
+        uptime: "20 Gün",
+        totalDisk: "200 GB",
+        freeDisk: "60 GB",
+        uipath: "-",
+        chrome: "138.0.7204.97",
+        edge: "138.0.3351.65",
+        sap: "750 Final Release",
+        office: "Office Plus 2016"
+    },
+    {
+        hostname: "BIMSHSDEVUPA02",
+        ip: "10.145.8.55",
+        app: "UiPath",
+        type: "Developer",
+        ram: "16 GB",
+        cpu: "4",
+        os: "Windows 10 Enterprise 64 Bit",
+        uptime: "5 Gün",
+        totalDisk: "149 GB",
+        freeDisk: "13 GB",
+        uipath: "2024.10.12 LTS",
+        chrome: "138.0.7204.97",
+        edge: "138.0.3351.65",
+        sap: "750 Final Release",
+        office: "Visio LTSC 2021"
+    },
+    {
+        hostname: "BIMSHSDEVUPA03",
+        ip: "10.145.8.56",
+        app: "UiPath",
+        type: "Developer",
+        ram: "16 GB",
+        cpu: "8",
+        os: "Windows 10 Enterprise 64 Bit",
+        uptime: "43 Gün",
+        totalDisk: "179 GB",
+        freeDisk: "38 GB",
+        uipath: "2024.10.12 LTS",
+        chrome: "138.0.7204.97",
+        edge: "138.0.3351.65",
+        sap: "750 Final Release",
+        office: "Office Plus 2019"
+    },
+    {
+        hostname: "BIMSHSDEVUPA05",
+        ip: "10.145.8.58",
+        app: "UiPath",
+        type: "Developer",
+        ram: "16 GB",
+        cpu: "4",
+        os: "Windows 10 Enterprise 64 Bit",
+        uptime: "85 Gün",
+        totalDisk: "119 GB",
+        freeDisk: "17 GB",
+        uipath: "2024.10.12 LTS",
+        chrome: "138.0.7204.97",
+        edge: "138.0.3351.65",
+        sap: "750 Final Release",
+        office: "Office Plus 2019"
+    },
+    {
+        hostname: "BIMSHSDEVUPA06",
+        ip: "10.145.8.122",
+        app: "UiPath",
+        type: "Developer",
+        ram: "16 GB",
+        cpu: "4",
+        os: "Windows 10 Enterprise 64 Bit",
+        uptime: "46 Gün",
+        totalDisk: "149 GB",
+        freeDisk: "10 GB",
+        uipath: "2023.10.4",
+        chrome: "138.0.7204.97",
+        edge: "138.0.3351.65",
+        sap: "750 Final Release",
+        office: "Office Plus 2019"
+    },
+    {
+        hostname: "BIMSHSDEVUPA07",
+        ip: "10.145.8.123",
+        app: "UiPath",
+        type: "Developer",
+        ram: "16 GB",
+        cpu: "4",
+        os: "Windows 10 Enterprise 64 Bit",
+        uptime: "169 Gün",
+        totalDisk: "100 GB",
+        freeDisk: "8 GB",
+        uipath: "2023.8.0 beta",
+        chrome: "138.0.7204.97",
+        edge: "138.0.3351.65",
+        sap: "750 Final Release",
+        office: "Office Plus 2019"
+    },
+    {
+        hostname: "BIMSHSRBTUPA06",
+        ip: "10.145.8.122",
+        app: "UiPath",
+        type: "Developer",
+        ram: "16 GB",
+        cpu: "4",
+        os: "Windows 10 Enterprise 64 Bit",
+        uptime: "46 Gün",
+        totalDisk: "149 GB",
+        freeDisk: "10 GB",
+        uipath: "2023.10.4",
+        chrome: "138.0.7204.97",
+        edge: "138.0.3351.65",
+        sap: "750 Final Release",
+        office: "Office Plus 2019"
+    },
+    {
+        hostname: "BIMSHSRBTVWBP24",
+        ip: "10.145.8.36",
+        app: "BluePrism",
+        type: "Robot",
+        ram: "8 GB",
+        cpu: "2",
+        os: "Windows Server 2016 Standard 64 Bit",
+        uptime: "11 Gün",
+        totalDisk: "80 GB",
+        freeDisk: "11 GB",
+        uipath: "-",
+        chrome: "138.0.7204.97",
+        edge: "138.0.3351.65",
+        sap: "750 Final Release",
+        office: "Office Plus 2016"
+    },
+    {
+        hostname: "BIMSHSRBTUPA01",
+        ip: "10.145.8.106",
+        app: "UiPath",
+        type: "Robot",
+        ram: "16 GB",
+        cpu: "4",
+        os: "Windows 10 Enterprise 64 Bit",
+        uptime: "64 Gün",
+        totalDisk: "200 GB",
+        freeDisk: "17.9 GB",
+        uipath: "2024.10.12 LTS",
+        chrome: "138.0.7204.97",
+        edge: "138.0.3351.65",
+        sap: "750 Final Release",
+        office: "Office LTSC 2021"
+    },
+    {
+        hostname: "BIMSHSRBTUPA02",
+        ip: "10.145.8.82",
+        app: "UiPath",
+        type: "Robot",
+        ram: "16 GB",
+        cpu: "4",
+        os: "Windows 10 Enterprise 64 Bit",
+        uptime: "44 Gün",
+        totalDisk: "169 GB",
+        freeDisk: "30 GB",
+        uipath: "2024.10.12 LTS",
+        chrome: "138.0.7204.97",
+        edge: "138.0.3351.65",
+        sap: "750 Final Release",
+        office: "Office Plus 2019"
+    },
+    {
+        hostname: "BIMSHSRBTUPA03",
+        ip: "10.145.8.83",
+        app: "UiPath",
+        type: "Robot",
+        ram: "16 GB",
+        cpu: "4",
+        os: "Windows 10 Enterprise 64 Bit",
+        uptime: "27 Gün",
+        totalDisk: "200 GB",
+        freeDisk: "32 GB",
+        uipath: "2024.10.12 LTS",
+        chrome: "138.0.7204.97",
+        edge: "138.0.3351.65",
+        sap: "750 Final Release",
+        office: "Office LTSC 2021"
+    },
+    {
+        hostname: "BIMSHSRBTUPA04",
+        ip: "10.145.8.81",
+        app: "UiPath",
+        type: "Robot",
+        ram: "16 GB",
+        cpu: "4",
+        os: "Windows 10 Enterprise 64 Bit",
+        uptime: "7 Gün",
+        totalDisk: "179 GB",
+        freeDisk: "50 GB",
+        uipath: "2024.10.12 LTS",
+        chrome: "138.0.7204.97",
+        edge: "138.0.3351.65",
+        sap: "750 Final Release",
+        office: "Office Plus 2016"
+    },
+    {
+        hostname: "BIMSHSRBTUPA05",
+        ip: "10.145.8.93",
+        app: "UiPath",
+        type: "Robot",
+        ram: "16 GB",
+        cpu: "4",
+        os: "Windows 10 Enterprise 64 Bit",
+        uptime: "70 Gün",
+        totalDisk: "200 GB",
+        freeDisk: "26 GB",
+        uipath: "2024.10.12 LTS",
+        chrome: "138.0.7204.97",
+        edge: "138.0.3351.65",
+        sap: "750 Final Release",
+        office: "Office Plus 2016"
+    }
+];
+
+
+        function evaluateStatus(machine) {
+            let criticalCount = 0;
+            let warningCount = 0;
+            
+            // RAM değerlendirmesi
+            const ramGB = parseInt(machine.ram);
+            if (ramGB < 8) criticalCount++;
+            else if (ramGB < 16) warningCount++;
+            
+            // CPU değerlendirmesi
+            const cpuCount = parseInt(machine.cpu);
+            if (cpuCount < 2 || cpuCount === 0) criticalCount++;
+            else if (cpuCount < 4) warningCount++;
+            
+            // Boş disk değerlendirmesi
+            const freeDiskGB = parseFloat(machine.freeDisk);
+            if (freeDiskGB < 15) criticalCount++;
+            else if (freeDiskGB < 25) warningCount++;
+            
+            // Uptime değerlendirmesi
+            const uptimeDays = parseInt(machine.uptime);
+            if (uptimeDays < 10) criticalCount++;
+            else if (uptimeDays < 25) warningCount++;
+            
+            // Bağlantı sorunları
+            if (machine.uipath.includes('No connection') || machine.uipath.includes('beta')) {
+                criticalCount++;
+            }
+            
+            if (criticalCount > 0) return 'critical';
+            if (warningCount > 0) return 'warning';
+            return 'good';
+        }
+
+        function renderMachineTable() {
+            const tableBody = document.getElementById('machineTableBody');
+            tableBody.innerHTML = '';
+            
+            machineData.forEach(machine => {
+                const status = evaluateStatus(machine);
+                const row = document.createElement('tr');
+                
+                // RAM durumu
+                const ramGB = parseInt(machine.ram);
+                const ramStatus = ramGB >= 16 ? 'status-good' : ramGB >= 8 ? 'status-warning' : 'status-critical';
+                
+                // CPU durumu
+                const cpuCount = parseInt(machine.cpu);
+                const cpuStatus = cpuCount >= 4 ? 'status-good' : cpuCount >= 2 ? 'status-warning' : 'status-critical';
+                
+                // Disk durumu
+                const freeDiskGB = parseFloat(machine.freeDisk);
+                const diskStatus = freeDiskGB >= 30 ? 'status-good' : freeDiskGB >= 20 ? 'status-warning' : 'status-critical';
+                
+                // Uptime durumu
+                const uptimeDays = parseInt(machine.uptime);
+                const uptimeStatus = uptimeDays >= 30 ? 'status-good' : uptimeDays >= 14 ? 'status-warning' : 'status-critical';
+                
+                row.innerHTML = `
+                    <td><div class="machine-name">${machine.hostname}</div></td>
+                    <td>${machine.ip}</td>
+                    <td><span class="${machine.app === 'UiPath' ? 'app-uipath' : 'app-blueprism'} app-type">${machine.app}</span></td>
+                    <td><span class="${machine.type === 'Robot' ? 'type-robot' : 'type-developer'} machine-type">${machine.type}</span></td>
+                    <td><span class="${ramStatus}">${machine.ram}</span></td>
+                    <td><span class="${cpuStatus}">${machine.cpu}</span></td>
+                    <td>${machine.os}</td>
+                    <td><span class="${uptimeStatus}">${machine.uptime}</span></td>
+                    <td>${machine.totalDisk}</td>
+                    <td><span class="${diskStatus}">${machine.freeDisk}</span></td>
+                    <td><span class="version-badge ${machine.uipath.includes('2024') ? 'version-ok' : 'version-outdated'}">${machine.uipath}</span></td>
+                    <td><span class="version-badge version-ok">${machine.chrome}</span></td>
+                    <td><span class="version-badge version-ok">${machine.edge}</span></td>
+                    <td><span class="version-badge version-ok">${machine.sap}</span></td>
+                    <td><span class="version-badge ${machine.office.includes('2021') ? 'version-ok' : 'version-outdated'}">${machine.office}</span></td>
+                    <td><span class="status-${status}">${status === 'good' ? 'İyi' : status === 'warning' ? 'Orta' : 'Kritik'}</span></td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Sayfa yüklendiğinde tabloyu oluştur
+        document.addEventListener('DOMContentLoaded', renderMachineTable);
+    </script>
+</body>
+</html>

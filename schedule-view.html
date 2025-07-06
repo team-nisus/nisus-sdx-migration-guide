@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Görünümü - RPA Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            background: rgba(255,255,255,0.95);
+            padding: 2rem 0;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .header h1 { color: #2c3e50; font-size: 2.5rem; margin: 0; }
+        .nav-back {
+            position: absolute;
+            top: 50%;
+            left: 2rem;
+            transform: translateY(-50%);
+            background: #3498db;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .nav-back:hover { background: #2980b9; }
+        .container { max-width: 95vw; margin: 0 auto; padding: 1rem; }
+        
+        .controls-panel {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px; 
+            padding: 1.5rem; 
+            margin-bottom: 1rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .time-filter { 
+            display: flex; 
+            gap: 1rem; 
+            align-items: center; 
+        }
+        
+        .filter-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .search-box {
+            padding: 0.5rem;
+            border: 2px solid #e0e6ed;
+            border-radius: 20px;
+            min-width: 200px;
+            font-size: 0.9rem;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .group-toggle {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .group-toggle.active {
+            background: #27ae60;
+        }
+        
+        .filter-btn {
+            background: #ecf0f1; 
+            color: #2c3e50;
+            border: none; 
+            padding: 0.5rem 1rem; 
+            border-radius: 20px;
+            cursor: pointer; 
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-btn.active, .filter-btn:hover { 
+            background: #3498db; 
+            color: white; 
+        }
+        
+        .stats-panel {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 0.5rem;
+        }
+        
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            margin-top: 0.2rem;
+        }
+        
+        .legend-panel {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px; 
+            padding: 1rem; 
+            margin-bottom: 1rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .legend-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 0.5rem; 
+        }
+        
+        .legend-item { 
+            display: flex; 
+            align-items: center; 
+            gap: 0.5rem; 
+            font-size: 0.85rem;
+        }
+        
+        .legend-color { 
+            width: 16px; 
+            height: 16px; 
+            border-radius: 8px; 
+        }
+        
+        .chart-container {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            overflow: hidden;
+            height: 70vh;
+            min-height: 600px;
+        }
+        
+        .chart-header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white; 
+            padding: 1rem; 
+            text-align: center;
+            position: relative;
+        }
+        
+        .chart-header h2 { 
+            font-size: 1.5rem; 
+            margin: 0;
+        }
+        
+        .gantt-chart { 
+            display: flex; 
+            height: calc(100% - 60px);
+        }
+        
+        .machine-labels {
+            background: #f8f9fa; 
+            min-width: 250px; 
+            max-width: 250px;
+            border-right: 2px solid #e0e6ed;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        
+        .timeline-header {
+            background: #34495e; 
+            color: white; 
+            height: 40px;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .machine-label {
+            height: 50px; 
+            display: flex; 
+            align-items: center; 
+            padding: 0 1rem;
+            border-bottom: 1px solid #e0e6ed; 
+            font-weight: 600; 
+            color: #2c3e50; 
+            font-size: 0.8rem;
+            line-height: 1.2;
+            word-wrap: break-word;
+            position: relative;
+        }
+        
+        .machine-label:hover {
+            background: #ecf0f1;
+        }
+        
+        .machine-count {
+            position: absolute;
+            right: 0.5rem;
+            top: 0.2rem;
+            background: #3498db;
+            color: white;
+            border-radius: 10px;
+            padding: 0.1rem 0.3rem;
+            font-size: 0.7rem;
+            min-width: 16px;
+            text-align: center;
+        }
+        
+        .timeline-container { 
+            flex: 1; 
+            overflow: auto;
+            height: 100%;
+        }
+        
+        .timeline-hours {
+            display: flex; 
+            background: #34495e; 
+            color: white; 
+            height: 40px;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+        
+        .hour-slot {
+            min-width: 60px;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            border-right: 1px solid #2c3e50; 
+            font-size: 0.75rem; 
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        
+        .timeline-rows { 
+            min-height: calc(100% - 40px);
+        }
+        
+        .timeline-row {
+            height: 50px; 
+            display: flex; 
+            border-bottom: 1px solid #e0e6ed; 
+            position: relative;
+        }
+        
+        .timeline-row:hover {
+            background: rgba(52, 152, 219, 0.05);
+        }
+        
+        .time-slot {
+            min-width: 60px;
+            border-right: 1px solid #f1f2f6; 
+            position: relative;
+            flex-shrink: 0;
+        }
+        
+        .schedule-bar {
+            position: absolute; 
+            height: 35px; 
+            top: 7.5px; 
+            border-radius: 15px;
+            display: flex; 
+            align-items: center; 
+            justify-content: flex-start;
+            color: white; 
+            font-size: 0.65rem; 
+            font-weight: 600;
+            overflow: hidden; 
+            white-space: nowrap; 
+            padding: 0 0.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            cursor: pointer; 
+            transition: all 0.3s ease;
+            z-index: 2;
+        }
+        
+        .schedule-bar:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 3;
+        }
+        
+        .schedule-bar-text {
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        
+        .priority-high { 
+            background: linear-gradient(135deg, #e74c3c, #c0392b); 
+        }
+        
+        .priority-normal { 
+            background: linear-gradient(135deg, #3498db, #2980b9); 
+        }
+        
+        .priority-low, .priority-unspecified { 
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d); 
+        }
+        
+        .priority-critical { 
+            background: linear-gradient(135deg, #8e44ad, #732d91); 
+        }
+        
+        .tooltip {
+            position: fixed;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 0.8rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            max-width: 300px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            pointer-events: none;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 2rem;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        
+        .group-header {
+            background: #ecf0f1;
+            font-weight: bold;
+            color: #2c3e50;
+            border-bottom: 2px solid #bdc3c7;
+        }
+        
+        .virtual-scroll {
+            height: 100%;
+            overflow-y: auto;
+        }
+        
+        @media (max-width: 768px) {
+            .container { padding: 0.5rem; }
+            .machine-labels { min-width: 180px; max-width: 180px; }
+            .hour-slot { min-width: 50px; }
+            .time-slot { min-width: 50px; }
+            .controls-panel { flex-direction: column; align-items: stretch; }
+            .filter-controls { justify-content: center; }
+        }
+        
+        @media (max-width: 480px) {
+            .machine-labels { min-width: 150px; max-width: 150px; }
+            .hour-slot { min-width: 40px; }
+            .time-slot { min-width: 40px; }
+            .search-box { min-width: 150px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="index.html" class="nav-back">← Ana Sayfa</a>
+        <h1>⏰ Schedule Görünümü</h1>
+        <p>Robotik Süreçlerin Zamanlama ve Makine Dağılımı Analizi</p>
+    </div>
+    
+    <div class="container">
+        <div class="controls-panel">
+            <div class="time-filter">
+                <label style="font-weight:600; color:#2c3e50;">Görünüm:</label>
+                <button class="filter-btn active" onclick="changeView('daily', event)">Günlük</button>
+                <button class="filter-btn" onclick="changeView('weekly', event)">Haftalık</button>
+                <button class="filter-btn" onclick="changeView('monthly', event)">Aylık</button>
+            </div>
+            
+            <div class="filter-controls">
+                <input type="text" class="search-box" id="searchBox" placeholder="Robot/Süreç ara..." onkeyup="filterSchedules()">
+                <button class="group-toggle" id="groupToggle" onclick="toggleGrouping()">Gruplama: Kapalı</button>
+            </div>
+        </div>
+        
+        <div class="stats-panel" id="statsPanel">
+            <div class="stat-item">
+                <div class="stat-number" id="totalJobs">0</div>
+                <div class="stat-label">Toplam İş</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="activeMachines">0</div>
+                <div class="stat-label">Aktif Makine</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="highPriorityJobs">0</div>
+                <div class="stat-label">Yüksek Öncelik</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="criticalJobs">0</div>
+                <div class="stat-label">Kritik İş</div>
+            </div>
+        </div>
+        
+        <div class="legend-panel">
+            <h3 style="color:#2c3e50; margin:0 0 1rem 0; text-align:center;">Öncelik Seviyeleri</h3>
+            <div class="legend-grid">
+                <div class="legend-item">
+                    <div class="legend-color priority-critical"></div>
+                    <span><strong>Critical:</strong> Kritik süreçler</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color priority-high"></div>
+                    <span><strong>High:</strong> Yüksek öncelik</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color priority-normal"></div>
+                    <span><strong>Normal:</strong> Standart öncelik</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color priority-low"></div>
+                    <span><strong>Unspecified:</strong> Öncelik belirtilmemiş</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-header">
+                <h2 id="chartHeader">Günlük Schedule Gantt Chart</h2>
+            </div>
+            <div class="gantt-chart">
+                <div class="machine-labels">
+                    <div class="timeline-header">Makineler / Süreçler</div>
+                    <div id="machineLabels" class="virtual-scroll"></div>
+                </div>
+                <div class="timeline-container">
+                    <div class="timeline-hours" id="timelineHours"></div>
+                    <div class="timeline-rows" id="timelineRows"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tooltip" id="tooltip" style="display:none;"></div>
+
+    <script>
+        // Global değişkenler
+        let currentView = 'daily';
+        let currentFilter = '';
+        let isGrouped = false;
+        let filteredData = [];
+        let allScheduleData = [];
+
+        // CSV verilerini JavaScript objelerine dönüştür
+        const scheduleRaw = [
+            { Folder: "BriSA", Name: "BriSA_00_AylikDetayRapor_HerAy01", JobPriority: "", Machine: null, Time: "08:30", Summary: "At 08:30 AM, on day 1 of the month" },
+            { Folder: "BriSA", Name: "BriSA_35_MalzemeKaynakliHurda_Hergün_07:00", JobPriority: "High", Machine: "BIMSHSRBTUPA06_Template", Time: "07:00", Summary: "At 07:00 AM" },
+            { Folder: "BriSA", Name: "Brisa_36_NicheSKUCycleMng_Haftaiçi_07:57", JobPriority: "High", Machine: "BIMSHSRBTUPA03_Template", Time: "07:57", Summary: "At 07:57 AM" },
+            { Folder: "BriSA", Name: "BriSA_14_VORGunlukOzurRaporu_HerGun_07:00", JobPriority: "High", Machine: "BIMSHSRBTUPA03_Template", Time: "07:00", Summary: "At 07:00 AM" },
+            { Folder: "BriSA", Name: "BriSA_32_OsatBafReferans", JobPriority: "", Machine: null, Time: "08:00", Summary: "At 08:00 AM, only on Tuesday" },
+            { Folder: "BriSA", Name: "BriSA_27_OEFirmaSiparislerininGirilmesi", JobPriority: "", Machine: "BIMSHSRBTUPA03_Template", Time: "10:00", Summary: "At 10:00 AM, only on Wednesday" },
+            { Folder: "BriSA", Name: "BriSA_17_Lojistik_QueueAdder_Hergün_08:13ve18:43_arası_her30dk", JobPriority: "", Machine: "BIMSHSRBTUPA05_Template", Time: "08:13", Summary: "At 13 and 43 minutes past the hour, at 08:00 AM to 06:00 PM" },
+            { Folder: "BriSA", Name: "BriSA_17_Lojistik_Faturaİşleme_Hergün_08:13ve18:43_arası_her30dk", JobPriority: "", Machine: "BIMSHSRBTUPA05_Template", Time: "08:18", Summary: "At 18 and 48 minutes past the hour, at 08:00 AM to 06:00 PM" },
+            { Folder: "BriSA", Name: "BriSA_31_SGKİştenÇıkış_Hergün_07:00", JobPriority: "", Machine: null, Time: "07:00", Summary: "At 07:00 AM" },
+            { Folder: "BriSA", Name: "BriSA_42_EnerjiTuketimTakibiAnalizi", JobPriority: "High", Machine: "BIMSHSRBTUPA01_Template", Time: "07:00", Summary: "At 07:00 AM" },
+            { Folder: "BriSA", Name: "BriSA_40_SevkiyatKonteynerRezervasyon", JobPriority: "", Machine: "BIMSHSRBTUPA05_Template", Time: "07:00", Summary: "At 07:00 AM" },
+            { Folder: "BriSA", Name: "BriSA_40_SevkiyatKonteynerRezervasyon_2", JobPriority: "", Machine: "BIMSHSRBTUPA05_Template", Time: "17:00", Summary: "At 05:00 PM" },
+            { Folder: "BriSA", Name: "BriSA_44_GIBTebligatAlimiVeGonderimi_Haftaiçi_01:00", JobPriority: "", Machine: "BIMSHSRBTUPA03_Template", Time: "01:00", Summary: "At 01:00 AM, weekdays" },
+            { Folder: "BriSA", Name: "BriSA_45_GunlukHamLastikKontrolu", JobPriority: "", Machine: "BIMSHSRBTUPA01_Template", Time: "08:30", Summary: "At 08:30 AM" },
+            { Folder: "BriSA", Name: "BriSA_03_TeminatSigortasiLimitGirisi", JobPriority: "", Machine: null, Time: "00:15", Summary: "At 12:15 AM" },
+            { Folder: "BriSA", Name: "BriSA_28_SAPCeviriHatalariCozme", JobPriority: "High", Machine: "BIMSHSRBTUPA01_Template", Time: "12:00", Summary: "At 12:00 PM" },
+            { Folder: "BriSA", Name: "BriSA_48_OE_Satis_Faturalarinin_Girilmesi_10:00", JobPriority: "", Machine: null, Time: "10:00", Summary: "At 10:00 AM, weekdays" },
+            { Folder: "BriSA", Name: "BriSA_49_MevduatKayitIslemleri1_Hergun_10:00", JobPriority: "High", Machine: "BIMSHSRBTUPA01_Template", Time: "10:00", Summary: "At 10:00 AM, weekdays" },
+            { Folder: "BriSA", Name: "BriSA_49_MevduatKayitIslemleri2_Hergun_2SaatAralik", JobPriority: "", Machine: null, Time: "00:00", Summary: "Every 2 hours, weekdays" },
+            { Folder: "BriSA", Name: "BriSA_22_SapFiyatKontrol_FirstDayEveryMonth", JobPriority: "", Machine: null, Time: "00:00", Summary: "At 12:00 AM, on day 1 of the month" },
+            { Folder: "BriSA", Name: "BriSA_22_SapFiyatKontrol_15thDayOfEveryMonth", JobPriority: "", Machine: null, Time: "00:00", Summary: "At 12:00 AM, on day 15 of the month" },
+            { Folder: "BriSA", Name: "BriSA_52_TurkTraktorForecastHazirlanmasi_HerAy13", JobPriority: "Normal", Machine: "BIMSHSRBTUPA01_Template", Time: "11:00", Summary: "At 11:00 AM, on day 13 of the month" },
+            { Folder: "BriSA", Name: "BriSA_52_TurkTraktorForecastHazirlanmasi_AySonu", JobPriority: "", Machine: "BIMSHSRBTUPA01_Template", Time: "11:00", Summary: "At 11:00 AM, on the last day of the month" },
+            { Folder: "BriSA", Name: "BriSA_27_OEFirmaSiparislerininGirilmesi_Cuma_11", JobPriority: "", Machine: "BIMSHSRBTUPA03_Template", Time: "11:00", Summary: "At 11:00 AM, only on Friday" },
+            { Folder: "BriSA", Name: "BriSA_41_MikserParametreDegisikligi_15dk_Bir", JobPriority: "", Machine: "BIMSHSRBTUPA06_Template", Time: "15:00", Summary: "Every 15 minutes, between 03:00 PM and 06:59 PM, weekdays" },
+            { Folder: "BriSA", Name: "BriSA_59_MSTOngoruGuncelleme_08:00", JobPriority: "", Machine: "BIMSHSRBTUPA03_Template", Time: "08:00", Summary: "At 08:00 AM, on day 1 of the month" },
+            { Folder: "BriSA", Name: "BriSA_59_MSTOngoruGuncelleme_08:00_Heray13", JobPriority: "", Machine: "BIMSHSRBTUPA03_Template", Time: "08:00", Summary: "At 08:00 AM, on day 13 of the month" },
+            { Folder: "CimSA", Name: "Çimsa_01_PratisIhaleAcma_PazarHaric_10:00", JobPriority: "", Machine: "BIMSHSRBTUPA03_Template", Time: "10:00", Summary: "At 10:00 AM, Monday through Friday" },
+            { Folder: "CimSA", Name: "Çimsa_02_PratisKatalogOnay_PazarHaric_08:00_11:00_14:00_16:00", JobPriority: "", Machine: null, Time: "08:00", Summary: "At 08:00 AM, 11:00 AM, 02:00 PM and 04:00 PM, Monday through Saturday" },
+            { Folder: "CimSA", Name: "Çimsa_03_SAP'dePratisSiparişiOluşturma_PazarHariç_16:00", JobPriority: "", Machine: null, Time: "16:00", Summary: "At 04:00 PM, Monday through Saturday" },
+            { Folder: "CimSA", Name: "Çimsa_03_SAP'dePratisSiparişiOluşturma_PazarHariç_22:30", JobPriority: "", Machine: null, Time: "22:30", Summary: "At 10:30 PM, Monday through Saturday" },
+            { Folder: "CimSA", Name: "CimSA_04_ZMM702GelmeyenSiparislerinGonderimi_HerAy_1ve15", JobPriority: "", Machine: null, Time: "14:30", Summary: "At 02:30 PM, on day 1 and 15 of the month" },
+            { Folder: "CimSA", Name: "CimSA_04_ZMM702GelmeyenSiparislerinGonderimi_HerAy_SonGun", JobPriority: "", Machine: null, Time: "14:30", Summary: "At 02:30 PM, on the last day of the month" },
+            { Folder: "CimSA", Name: "Cron_CimSA_08_MalzemeDonemininAcilmasi", JobPriority: "", Machine: null, Time: "00:05", Summary: "At 12:05 AM, on day 1 of the month" },
+            { Folder: "CimSA", Name: "CimSa_11_SgkIstenCikis", JobPriority: "", Machine: "BIMSHSRBTUPA05_Template", Time: "07:00", Summary: "At 07:00 AM, everyday" },
+            { Folder: "CimSA", Name: "Cimsa_10_SGKIseGiris_09:00_12:00_15:00_18:00", JobPriority: "", Machine: null, Time: "09:00", Summary: "Every 3 hours, between 09:00 AM and 06:59 PM" },
+            { Folder: "CimSA", Name: "Cimsa_10_SGKIseGiris_21:00_23:00", JobPriority: "", Machine: null, Time: "21:00", Summary: "Every 2 hours, between 09:00 PM and 11:59 PM" },
+            { Folder: "CimSA", Name: "CimSa_12_EmniyetIseGiris_HerCuma_09:00", JobPriority: "", Machine: null, Time: "09:00", Summary: "At 09:00 AM, only on Friday" },
+            { Folder: "CimSA", Name: "CimSa_13_EmniyetIstenCikis_HerCuma_11:00", JobPriority: "", Machine: null, Time: "11:00", Summary: "At 11:00 AM, only on Friday" },
+            { Folder: "CimSA", Name: "Cimsa_09_Ketsis_9AM", JobPriority: "", Machine: "BIMSHSRBTUPA02_Template", Time: "09:00", Summary: "At 09:00 AM" },
+            { Folder: "CimSA", Name: "Cimsa_09_Ketsis_11:45AM", JobPriority: "", Machine: "BIMSHSRBTUPA02_Template", Time: "11:45", Summary: "At 11:45 AM" },
+            { Folder: "CimSA", Name: "Cimsa_09_Ketsis_14:30", JobPriority: "", Machine: "BIMSHSRBTUPA02_Template", Time: "14:30", Summary: "At 02:30 PM" },
+            { Folder: "CimSA", Name: "Cimsa_09_Ketsis_18PM", JobPriority: "", Machine: "BIMSHSRBTUPA02_Template", Time: "18:00", Summary: "At 06:00 PM" },
+            { Folder: "CimSA", Name: "Cimsa_14_Konkordato_Hergün_15:00", JobPriority: "", Machine: null, Time: "15:00", Summary: "At 03:00 PM" },
+            { Folder: "PRP", Name: "Queue_Report_Monthly", JobPriority: "", Machine: null, Time: "00:01", Summary: "At 12:01 AM, on day 05 of the month" },
+            { Folder: "SDX_TestOtomasyonu", Name: "SabanciDx_Perfx_19_Gorev_Ekleme_ve_Silme", JobPriority: "", Machine: "BIMSHSRBTUPA05_Template", Time: "06:45", Summary: "At 06:45 AM" },
+            { Folder: "SDX_TestOtomasyonu", Name: "SabanciDx_Perfx_16_Hedef_Girme_BosAlan", JobPriority: "", Machine: "BIMSHSRBTUPA05_Template", Time: "06:50", Summary: "At 06:50 AM" },
+            { Folder: "SDX_TestOtomasyonu", Name: "SabanciDx_Perfx_10_Yonetici_Ekibim_Toggle", JobPriority: "", Machine: "BIMSHSRBTUPA05_Template", Time: "06:40", Summary: "At 06:40 AM" },
+            { Folder: "SDX_TestOtomasyonu", Name: "SabanciDx_Perfx_01_Yeni_Admin_Ekranina_Gecis", JobPriority: "", Machine: "BIMSHSRBTUPA05_Template", Time: "06:55", Summary: "At 06:55 AM" },
+            { Folder: "SDX_TestOtomasyonu", Name: "SabanciDx_Perfx_11_Yonetici_Ekibim_BagliCalisan", JobPriority: "", Machine: "BIMSHSRBTUPA05_Template", Time: "06:35", Summary: "At 06:35 AM" },
+            { Folder: "SDX_TestOtomasyonu", Name: "SabanciDx_Perfx_05_Profil_Goruntuleme", JobPriority: "", Machine: "BIMSHSRBTUPA05_Template", Time: "06:32", Summary: "At 06:32 AM" },
+            { Folder: "SDX_TestOtomasyonu", Name: "SabanciDx_Perfx_06_Gorusme_Talebi", JobPriority: "", Machine: "BIMSHSRBTUPA05_Template", Time: "06:37", Summary: "At 06:37 AM" },
+            { Folder: "SDX_TestOtomasyonu", Name: "SabanciDx_Perfx_07_LogIn_LogOut", JobPriority: "", Machine: "BIMSHSRBTUPA05_Template", Time: "06:43", Summary: "At 06:43 AM" },
+            { Folder: "SDX_TestOtomasyonu", Name: "SabanciDx_Perfx_04_Admin_Panel_Hedef_Kutuphanesi", JobPriority: "", Machine: null, Time: "06:57", Summary: "At 06:57 AM" },
+            { Folder: "SDX_TestOtomasyonu", Name: "SabanciDx_Perfx_03_Admin_Ekranina_Gecis", JobPriority: "", Machine: null, Time: "06:10", Summary: "At 06:10 AM" },
+            { Folder: "SDX_TestOtomasyonu", Name: "SabanciDx_Perfx_02_Hedef_Ekleme_Yuzde", JobPriority: "", Machine: "BIMSHSRBTUPA01_Template", Time: "05:37", Summary: "At 05:37 AM" },
+            { Folder: "SDX_TestOtomasyonu", Name: "SabanciDx_Perfx_21_Hedef_Ekleme_Tarih_Azalan", JobPriority: "", Machine: "BIMSHSRBTUPA02_Template", Time: "05:49", Summary: "At 05:49 AM" },
+            { Folder: "SabanciDx", Name: "TorunMetal_01_SozlesmeliSiparislerinYaratilmasi_HerGun_03:10", JobPriority: "", Machine: "BIMSHSRBTUPA01_Template", Time: "03:10", Summary: "At 03:10 AM" },
+            { Folder: "SabanciDx", Name: "DX_EgeEndüstri_01_PratisİhaleKazandırmaVeSiparişOluşturma_Haftaiçi_12:00", JobPriority: "", Machine: "BIMSHSRBTUPA06_Template", Time: "12:00", Summary: "At 12:00 PM" },
+            { Folder: "SabanciDx", Name: "DX_EgeEndüstri_02_PratisİhaleOluşturma_Haftaiçi_10:00", JobPriority: "", Machine: "BIMSHSRBTUPA06_Template", Time: "10:00", Summary: "At 10:00 AM" },
+            { Folder: "SabanciDx", Name: "DX_EgeEndüstri_01_PratisİhaleKazandırmaVeSiparişOluşturma_Haftaiçi_20:30", JobPriority: "", Machine: "BIMSHSRBTUPA06_Template", Time: "20:30", Summary: "At 08:30 PM" },
+            { Folder: "SabanciDx", Name: "DX_EgeEndüstri_02_PratisİhaleOluşturma_Haftaiçi_16:30", JobPriority: "", Machine: "BIMSHSRBTUPA06_Template", Time: "16:30", Summary: "At 04:30 PM" },
+            { Folder: "SabanciDx", Name: "SabanciDx54_HrWebIstenCikis", JobPriority: "", Machine: null, Time: "09:00", Summary: "At 09:00 AM, weekdays" },
+            { Folder: "SabanciDx", Name: "SabanciDx54_HrWebIstenCikis_1905", JobPriority: "", Machine: null, Time: "19:05", Summary: "At 07:05 PM, weekdays" },
+            { Folder: "SabanciDx", Name: "TorunMetal_02_Kaplama_04:30", JobPriority: "", Machine: "BIMSHSRBTUPA01_Template", Time: "04:30", Summary: "At 04:30 AM" },
+            { Folder: "SabanciDx", Name: "SabanciDx55_Yakit_Asim_HavuzArac", JobPriority: "", Machine: null, Time: "10:00", Summary: "At 10:00 AM, on day 1 of the month" },
+            { Folder: "SabanciDx", Name: "SabanciDx55_Yakit_Asim_Mail_2.Day", JobPriority: "", Machine: null, Time: "10:00", Summary: "At 10:00 AM, on day 2 of the month" },
+            { Folder: "SabanciDx", Name: "SabanciDx55_Yakit_Asim_Mail_3.Day", JobPriority: "", Machine: null, Time: "10:00", Summary: "At 10:00 AM, on day 3 of the month" },
+            { Folder: "SabanciDx", Name: "SabanciDx55_Yakit_Asim_Mail_4.Day", JobPriority: "", Machine: null, Time: "10:00", Summary: "At 10:00 AM, on day 4 of the month" },
+            { Folder: "SabanciDx", Name: "SabanciDx_56_Edoksis_Sozlesme_CustomerMail", JobPriority: "Normal", Machine: null, Time: "00:00", Summary: "At 12:00 AM" },
+            { Folder: "SabanciDx", Name: "SabanciDx55_Yakit_Asim_AylikRapor", JobPriority: "Normal", Machine: null, Time: "11:00", Summary: "At 11:00 AM, on day 1 of the month" },
+            { Folder: "SabanciDx", Name: "03_TorunMetal_TaslakalimIhaleOlusturma_10:00", JobPriority: "", Machine: null, Time: "10:00", Summary: "At 10:00 AM" },
+            { Folder: "SabanciDx", Name: "03_TorunMetal_TaslakalimIhaleOlusturma_13:00", JobPriority: "", Machine: null, Time: "13:00", Summary: "At 01:00 PM" },
+            { Folder: "SabanciDx", Name: "03_TorunMetal_TaslakalimIhaleOlusturma_16:00", JobPriority: "", Machine: null, Time: "16:00", Summary: "At 04:00 PM" },
+            { Folder: "SabanciDx", Name: "SabanciDx_63_IstenCikisSMTicketOlusturma_Haftaİci_1800", JobPriority: "", Machine: "BIMSHSRBTUPA02_Template", Time: "18:00", Summary: "At 06:00 PM, weekdays" },
+            { Folder: "SabanciDx", Name: "SabanciDx_63_IstenCikisSMTicketOlusturma_Haftaİci_2200", JobPriority: "", Machine: "BIMSHSRBTUPA02_Template", Time: "22:00", Summary: "At 10:00 PM, weekdays" },
+            { Folder: "SabanciDx", Name: "SabanciDx_65_EdoksisEksiBakiyeKontrol", JobPriority: "", Machine: "BIMSHSRBTUPA01_Template", Time: "10:00", Summary: "At 10:00 AM, only on Monday" },
+            { Folder: "SabanciDx", Name: "SabanciDx_63_IstenCikis_Sigorta", JobPriority: "", Machine: "BIMSHSRBTUPA02_Template", Time: "00:00", Summary: "At 12:00 AM, on the last weekday of the month" },
+            { Folder: "SabanciDx", Name: "SabancıDx_59_DxVBFaturalarininMailleOnaylanmasi_MailOnaylama_1", JobPriority: "", Machine: null, Time: "10:00", Summary: "At 10:00 AM" },
+            { Folder: "SabanciDx", Name: "SabancıDx_59_DxVBFaturalarininMailleOnaylanmasi_MailOnaylama_2", JobPriority: "", Machine: null, Time: "14:00", Summary: "At 02:00 PM" },
+            { Folder: "SabanciDx", Name: "SabancıDx_59_DxVBFaturalarininMailleOnaylanmasi_MailOnaylama_3", JobPriority: "", Machine: null, Time: "18:00", Summary: "At 06:00 PM" },
+            { Folder: "SabanciDx", Name: "SabancıDx_59_DxVBFaturalarininMailleOnaylanmasi_MailOnaylama_4", JobPriority: "", Machine: null, Time: "12:00", Summary: "At 12:00 PM" },
+            { Folder: "SabanciDx", Name: "SabancıDx_59_DxVBFaturalarininMailleOnaylanmasi_MailOnaylama_5", JobPriority: "", Machine: null, Time: "16:00", Summary: "At 04:00 PM" },
+            { Folder: "SabanciDx", Name: "SabanciDx55_Yakit_Asim_Mail_1.Day", JobPriority: "", Machine: null, Time: "14:00", Summary: "At 02:00 PM, on day 1 of the month" },
+            { Folder: "SabanciDx", Name: "Nisus_Müşeri_Yorumları_Yönetimi_06:00", JobPriority: "", Machine: "BIMSHSRBTUPA03_Template", Time: "06:00", Summary: "At 06:00 AM" },
+            { Folder: "Tavuk Dünyası", Name: "TavukDunyasi_06_EArsivFatura_Yeni_02", JobPriority: "", Machine: "BIMSHSRBTUPA05_Template", Time: "19:00", Summary: "At 07:00 PM, on day 28 of February" },
+            { Folder: "Tavuk Dünyası", Name: "TavukDunyasi_06_EArsivFatura_Yeni_02_", JobPriority: "", Machine: "BIMSHSRBTUPA05_Template", Time: "19:00", Summary: "At 07:00 PM, on day 3, 5, 8, 15, 22, and 29 of the month" },
+            { Folder: "Tavuk Dünyası", Name: "TavukDunyasi_07_EFatura_02_Hergün_01:00", JobPriority: "", Machine: "BIMSHSRBTUPA05_Template", Time: "01:00", Summary: "At 01:00 AM" },
+            { Folder: "Tavuk Dünyası", Name: "TavukDunyasi_05_PrimHesaplama_Yeni", JobPriority: "", Machine: "BIMSHSRBTUPA02_Template", Time: "13:00", Summary: "At 01:00 PM, on day 13, 15, 17, and 19 of the month" },
+            { Folder: "TemSA", Name: "TemSA_01_SigortaPoliceleriGirisVeGiderlestirme", JobPriority: "", Machine: "BIMSHSRBTUPA01_Template", Time: "17:00", Summary: "At 05:00 PM, only on Friday" },
+            { Folder: "TemSA", Name: "TemSA_14_EbaBayiFaturalarininSAPyeAktarilmasi_Her_Çarşamba_15:00", JobPriority: "", Machine: null, Time: "15:00", Summary: "At 03:00 PM, only on Wednesday" },
+            { Folder: "TemSA", Name: "TemSA_15_Navlun_Bedellerinin_Hesaplanmasi", JobPriority: "", Machine: "BIMSHSRBTUPA01_Template", Time: "00:30", Summary: "At 12:30 AM, only on Saturday" },
+            { Folder: "TemSA", Name: "TemSA_13_Navlun_Faturalarinin_Muhasebelestirilmesi", JobPriority: "", Machine: "BIMSHSRBTUPA01_Template", Time: "20:00", Summary: "At 08:00 PM, only on Friday" },
+            { Folder: "TemSA", Name: "TemSA_19_TNT_Nakliye_Faturalarinin_Muhasebelestirilmesi", JobPriority: "", Machine: "BIMSHSRBTUPA01_Template", Time: "00:30", Summary: "At 12:30 AM, only on Friday" },
+            { Folder: "TemSA", Name: "TemSA_21_OctetDogrudanBorclandirma", JobPriority: "", Machine: "BIMSHSRBTUPA06_Template", Time: "19:00", Summary: "At 07:00 PM, weekdays" },
+            { Folder: "TemSA", Name: "TemSA_22_YDNavlunFaturalarininSAPyeAktarilmasi", JobPriority: "", Machine: "BIMSHSRBTUPA03_Template", Time: "20:00", Summary: "At 08:00 PM, only on Thursday and Monday" },
+            { Folder: "TemSA", Name: "Temsa_22_YDNavlunFaturalarininSAPyeAktarilmasi_Son_Hafta", JobPriority: "", Machine: "BIMSHSRBTUPA03_Template", Time: "20:00", Summary: "At 08:00 PM, on the last weekday of the month" },
+            { Folder: "Toyota", Name: "Toyota_HrwebIzinOnay_08:00", JobPriority: "", Machine: "BIMSHSRBTUPA02_Template", Time: "08:00", Summary: "At 08:00 AM" },
+            { Folder: "Toyota", Name: "Toyota_HrwebIzinOnay_10:00", JobPriority: "", Machine: "BIMSHSRBTUPA02_Template", Time: "10:00", Summary: "At 10:00 AM" },
+            { Folder: "Toyota", Name: "Toyota_HrwebIzinOnay_12:00", JobPriority: "", Machine: "BIMSHSRBTUPA02_Template", Time: "12:00", Summary: "At 12:00 PM" },
+            { Folder: "Toyota", Name: "Toyota_HrwebIzinOnay_15:00", JobPriority: "", Machine: "BIMSHSRBTUPA02_Template", Time: "15:00", Summary: "At 03:00 PM" },
+            { Folder: "Toyota", Name: "Toyota_HrwebIzinOnay_16:00", JobPriority: "", Machine: "BIMSHSRBTUPA02_Template", Time: "16:00", Summary: "At 04:00 PM" },
+            { Folder: "Toyota", Name: "Toyota_01_HrwebIzinOnayPart2_07:00", JobPriority: "", Machine: "BIMSHSRBTUPA02_Template", Time: "07:10", Summary: "At 07:10 AM" },
+            { Folder: "Toyota", Name: "Toyota_01_HrwebIzinOnayPart2_18:00", JobPriority: "", Machine: "BIMSHSRBTUPA02_Template", Time: "18:00", Summary: "At 06:00 PM" }
+        ];
+
+        // Başlangıç işlemleri
+        document.addEventListener('DOMContentLoaded', function() {
+            allScheduleData = scheduleRaw.map(item => ({
+                ...item,
+                Machine: item.Machine || 'Tanımsız Makine',
+                JobPriority: item.JobPriority || 'Unspecified'
+            }));
+            
+            renderSchedule(currentView);
+            updateStats();
+        });
+
+        // Zaman dilimi slotları oluştur
+        function getSlots(viewType) {
+            if (viewType === "daily") {
+                return Array.from({length: 24}, (_, i) => 
+                    String(i).padStart(2, '0') + ":00"
+                );
+            } else if (viewType === "weekly") {
+                return ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
+            } else if (viewType === "monthly") {
+                return Array.from({length: 31}, (_, i) => (i + 1) + ".");
+            }
+            return [];
+        }
+
+        // Veri filtreleme
+        function filterSchedules() {
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            currentFilter = searchTerm;
+            
+            filteredData = allScheduleData.filter(item => 
+                item.Name.toLowerCase().includes(searchTerm) ||
+                (item.Machine && item.Machine.toLowerCase().includes(searchTerm)) ||
+                item.Folder.toLowerCase().includes(searchTerm)
+            );
+            
+            renderSchedule(currentView);
+            updateStats();
+        }
+
+        // Gruplama toggle
+        function toggleGrouping() {
+            isGrouped = !isGrouped;
+            const toggleBtn = document.getElementById('groupToggle');
+            toggleBtn.textContent = `Gruplama: ${isGrouped ? 'Açık' : 'Kapalı'}`;
+            toggleBtn.classList.toggle('active', isGrouped);
+            renderSchedule(currentView);
+        }
+
+        // İstatistikleri güncelle
+        function updateStats() {
+            const data = currentFilter ? filteredData : allScheduleData;
+            
+            document.getElementById('totalJobs').textContent = data.length;
+            
+            const uniqueMachines = new Set(data.map(item => item.Machine).filter(m => m && m !== 'Tanımsız Makine'));
+            document.getElementById('activeMachines').textContent = uniqueMachines.size;
+            
+            const highPriority = data.filter(item => item.JobPriority === 'High').length;
+            document.getElementById('highPriorityJobs').textContent = highPriority;
+            
+            const critical = data.filter(item => item.JobPriority === 'Critical').length;
+            document.getElementById('criticalJobs').textContent = critical;
+        }
+
+        // Makineleri organizasyon yapısına göre grupla
+        function organizeData(data, viewType) {
+            if (isGrouped) {
+                // Folder'a göre grupla
+                const grouped = {};
+                data.forEach(item => {
+                    if (!grouped[item.Folder]) {
+                        grouped[item.Folder] = {};
+                    }
+                    const machine = item.Machine || 'Tanımsız Makine';
+                    if (!grouped[item.Folder][machine]) {
+                        grouped[item.Folder][machine] = [];
+                    }
+                    grouped[item.Folder][machine].push(item);
+                });
+                return grouped;
+            } else {
+                // Sadece makineye göre grupla
+                const machines = {};
+                data.forEach(item => {
+                    const machine = item.Machine || 'Tanımsız Makine';
+                    if (!machines[machine]) {
+                        machines[machine] = [];
+                    }
+                    machines[machine].push(item);
+                });
+                return { 'Tüm Süreçler': machines };
+            }
+        }
+
+        // Zaman pozisyonu hesapla
+        function timeToPosition(timeStr, viewType) {
+            if (!timeStr) return 0;
+            
+            if (viewType === "daily") {
+                const [hours, minutes] = timeStr.split(':').map(Number);
+                if (isNaN(hours) || isNaN(minutes)) return 0;
+                return ((hours + minutes/60) / 24) * 100;
+            }
+            return 0;
+        }
+
+        // Öncelik sınıfını belirle
+        function getPriorityClass(priority) {
+            if (!priority || priority === 'Unspecified') return 'priority-unspecified';
+            const p = priority.toLowerCase();
+            if (p.includes("critical")) return 'priority-critical';
+            if (p.includes("high")) return 'priority-high';
+            if (p.includes("normal")) return 'priority-normal';
+            return 'priority-unspecified';
+        }
+
+        // Schedule bar oluştur
+        function createScheduleBar(process, viewType, containerWidth) {
+            const bar = document.createElement('div');
+            bar.className = `schedule-bar ${getPriorityClass(process.JobPriority)}`;
+            
+            if (viewType === "daily") {
+                const leftPos = timeToPosition(process.Time, viewType);
+                bar.style.left = `${leftPos}%`;
+                bar.style.width = `3%`; // Sabit genişlik
+            } else {
+                bar.style.left = `0%`;
+                bar.style.width = `100%`;
+            }
+            
+
+            
+            // Event listeners
+            bar.addEventListener('mouseenter', (e) => showTooltip(e, process));
+            bar.addEventListener('mouseleave', hideTooltip);
+            bar.addEventListener('mousemove', updateTooltipPosition);
+            bar.addEventListener('click', () => showProcessDetails(process));
+            
+            return bar;
+        }
+
+        // Tooltip göster
+        function showTooltip(e, process) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.innerHTML = `
+                <strong>${process.Name}</strong><br>
+                <strong>Klasör:</strong> ${process.Folder}<br>
+                <strong>Saat:</strong> ${process.Time || '-'}<br>
+                <strong>Öncelik:</strong> ${process.JobPriority || 'Belirtilmemiş'}<br>
+                <strong>Makine:</strong> ${process.Machine || 'Tanımsız'}<br>
+                <strong>Zamanlama:</strong> ${process.Summary || '-'}
+            `;
+            tooltip.style.display = "block";
+            updateTooltipPosition(e);
+        }
+
+        function hideTooltip() {
+            document.getElementById('tooltip').style.display = "none";
+        }
+
+        function updateTooltipPosition(e) {
+            const tooltip = document.getElementById('tooltip');
+            const rect = tooltip.getBoundingClientRect();
+            let left = e.clientX + 15;
+            let top = e.clientY + 15;
+            
+            // Ekran sınırlarını kontrol et
+            if (left + rect.width > window.innerWidth) {
+                left = e.clientX - rect.width - 15;
+            }
+            if (top + rect.height > window.innerHeight) {
+                top = e.clientY - rect.height - 15;
+            }
+            
+            tooltip.style.left = `${left}px`;
+            tooltip.style.top = `${top}px`;
+        }
+
+        // Süreç detaylarını göster
+        function showProcessDetails(process) {
+            alert(`Süreç Detayları:\n\nAdı: ${process.Name}\nKlasör: ${process.Folder}\nMakine: ${process.Machine}\nÖncelik: ${process.JobPriority}\nZamanlama: ${process.Summary}`);
+        }
+
+        // Ana render fonksiyonu
+        function renderSchedule(viewType = "daily") {
+            const data = currentFilter ? filteredData : allScheduleData;
+            
+            if (data.length === 0) {
+                renderEmptyState();
+                return;
+            }
+            
+            // Temizle
+            const machineLabelsContainer = document.getElementById('machineLabels');
+            const timelineHours = document.getElementById('timelineHours');
+            const timelineRows = document.getElementById('timelineRows');
+            
+            machineLabelsContainer.innerHTML = '';
+            timelineHours.innerHTML = '';
+            timelineRows.innerHTML = '';
+            
+            // Zaman slotları oluştur
+            const slots = getSlots(viewType);
+            slots.forEach(slot => {
+                const slotDiv = document.createElement('div');
+                slotDiv.className = "hour-slot";
+                slotDiv.textContent = slot;
+                timelineHours.appendChild(slotDiv);
+            });
+            
+            // Verileri organize et
+            const organizedData = organizeData(data, viewType);
+            
+            // Render işlemi
+            Object.keys(organizedData).forEach(groupName => {
+                if (isGrouped) {
+                    // Grup başlığı ekle
+                    const groupLabel = document.createElement('div');
+                    groupLabel.className = "machine-label group-header";
+                    groupLabel.textContent = groupName;
+                    machineLabelsContainer.appendChild(groupLabel);
+                    
+                    const groupRow = document.createElement('div');
+                    groupRow.className = "timeline-row group-header";
+                    for (let i = 0; i < slots.length; i++) {
+                        const slotDiv = document.createElement('div');
+                        slotDiv.className = "time-slot";
+                        groupRow.appendChild(slotDiv);
+                    }
+                    timelineRows.appendChild(groupRow);
+                }
+                
+                const machines = organizedData[groupName];
+                Object.keys(machines).forEach(machineName => {
+                    const processes = machines[machineName];
+                    
+                    // Makine etiketi
+                    const labelDiv = document.createElement('div');
+                    labelDiv.className = "machine-label";
+                    labelDiv.innerHTML = `
+                        ${machineName}
+                        <span class="machine-count">${processes.length}</span>
+                    `;
+                    machineLabelsContainer.appendChild(labelDiv);
+                    
+                    // Zaman satırı
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = "timeline-row";
+                    
+                    for (let i = 0; i < slots.length; i++) {
+                        const slotDiv = document.createElement('div');
+                        slotDiv.className = "time-slot";
+                        
+                        if (viewType === "daily") {
+                            // Günlük görünümde sadece belirli saatte çalışanları göster
+                            processes.forEach(proc => {
+                                const procHour = parseInt(proc.Time?.split(':')[0] || '0');
+                                if (procHour === i) {
+                                    slotDiv.appendChild(createScheduleBar(proc, viewType, 60));
+                                }
+                            });
+                        } else {
+                            // Haftalık/aylık görünümde tüm süreçleri göster
+                            if (i === 0 && processes.length > 0) {
+                                const stackHeight = Math.min(processes.length, 3); // Maksimum 3 bar göster
+                                processes.slice(0, stackHeight).forEach((proc, index) => {
+                                    const bar = createScheduleBar(proc, viewType, 60);
+                                    bar.style.top = `${7.5 + (index * 12)}px`;
+                                    bar.style.height = '10px';
+                                    bar.style.fontSize = '0.6rem';
+                                    slotDiv.appendChild(bar);
+                                });
+                                
+                                if (processes.length > 3) {
+                                    const moreBar = document.createElement('div');
+                                    moreBar.className = 'schedule-bar priority-normal';
+                                    moreBar.style.top = '43px';
+                                    moreBar.style.height = '6px';
+                                    moreBar.style.fontSize = '0.5rem';
+                                    moreBar.style.left = '0%';
+                                    moreBar.style.width = '100%';
+                                    moreBar.textContent = `+${processes.length - 3} daha`;
+                                    slotDiv.appendChild(moreBar);
+                                }
+                            }
+                        }
+                        
+                        rowDiv.appendChild(slotDiv);
+                    }
+                    
+                    timelineRows.appendChild(rowDiv);
+                });
+            });
+            
+            // Chart başlığını güncelle
+            const headerText = viewType === "daily" ? "Günlük Schedule Gantt Chart"
+                : viewType === "weekly" ? "Haftalık Schedule Gantt Chart"
+                : "Aylık Schedule Gantt Chart";
+            
+            document.getElementById('chartHeader').textContent = 
+                `${headerText} (${data.length} süreç)`;
+        }
+
+        // Boş durum render
+        function renderEmptyState() {
+            const machineLabelsContainer = document.getElementById('machineLabels');
+            const timelineRows = document.getElementById('timelineRows');
+            
+            machineLabelsContainer.innerHTML = '<div class="no-data">Veri bulunamadı</div>';
+            timelineRows.innerHTML = '<div class="no-data">Arama kriterlerinize uygun süreç bulunamadı</div>';
+            
+            document.getElementById('timelineHours').innerHTML = '';
+            document.getElementById('chartHeader').textContent = 'Schedule Gantt Chart - Veri Yok';
+        }
+
+        // Görünüm değiştir
+        function changeView(viewType, event) {
+            currentView = viewType;
+            
+            // Buton durumlarını güncelle
+            document.querySelectorAll('.filter-btn').forEach(btn => 
+                btn.classList.remove('active')
+            );
+            event.target.classList.add('active');
+            
+            renderSchedule(viewType);
+        }
+
+        // Klavye kısayolları
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case '1':
+                        e.preventDefault();
+                        changeView('daily', {target: document.querySelector('.filter-btn')});
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        changeView('weekly', {target: document.querySelector('.filter-btn')});
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        changeView('monthly', {target: document.querySelector('.filter-btn')});
+                        break;
+                    case 'f':
+                        e.preventDefault();
+                        document.getElementById('searchBox').focus();
+                        break;
+                    case 'g':
+                        e.preventDefault();
+                        toggleGrouping();
+                        break;
+                }
+            }
+        });
+
+        // Responsive scroll senkronizasyonu
+        function syncScroll() {
+            const timelineContainer = document.querySelector('.timeline-container');
+            const machineLabels = document.querySelector('.machine-labels');
+            
+            if (timelineContainer && machineLabels) {
+                timelineContainer.addEventListener('scroll', function() {
+                    machineLabels.scrollTop = this.scrollTop;
+                });
+            }
+        }
+
+        // Performance optimization için debounce
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Optimized filter function
+        const debouncedFilter = debounce(filterSchedules, 300);
+        document.getElementById('searchBox').addEventListener('input', debouncedFilter);
+
+        // Scroll senkronizasyonunu başlat
+        document.addEventListener('DOMContentLoaded', syncScroll);
+
+        // Export functionality
+        function exportData() {
+            const data = currentFilter ? filteredData : allScheduleData;
+            const csv = [
+                ['Klasör', 'Süreç Adı', 'Öncelik', 'Makine', 'Saat', 'Açıklama'].join(','),
+                ...data.map(item => [
+                    item.Folder,
+                    `"${item.Name}"`,
+                    item.JobPriority,
+                    item.Machine || 'Tanımsız',
+                    item.Time,
+                    `"${item.Summary || ''}"`
+                ].join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'schedule_data.csv';
+            link.click();
+        }
+
+        // Window resize handler
+        window.addEventListener('resize', debounce(() => {
+            renderSchedule(currentView);
+        }, 250));
+
+        // Print support
+        function printSchedule() {
+            window.print();
+        }
+
+        // Gelişmiş arama fonksiyonları
+        function advancedSearch() {
+            // Gelecekte implementasyon için placeholder
+            console.log('Gelişmiş arama özelliği geliştirilecek');
+        }
+
+        // Touch events for mobile
+        let startY = 0;
+        document.addEventListener('touchstart', function(e) {
+            startY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', function(e) {
+            const currentY = e.touches[0].clientY;
+            const diff = startY - currentY;
+            
+            if (Math.abs(diff) > 50) {
+                // Mobil kaydırma optimizasyonu
+                e.preventDefault();
+            }
+        });
+
+        // Accessibility improvements
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                // Tab navigation için highlight
+                document.body.classList.add('keyboard-navigation');
+            }
+        });
+
+        document.addEventListener('mousedown', function() {
+            document.body.classList.remove('keyboard-navigation');
+        });
+
+    </script>
+
+    <style>
+        @media print {
+            .controls-panel, .nav-back { display: none !important; }
+            .container { max-width: 100% !important; padding: 0 !important; }
+            .chart-container { height: auto !important; }
+            body { background: white !important; }
+        }
+
+        .keyboard-navigation *:focus {
+            outline: 2px solid #3498db !important;
+            outline-offset: 2px !important;
+        }
+
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Smooth transitions */
+        .schedule-bar, .filter-btn, .machine-label {
+            transition: all 0.2s ease;
+        }
+
+        /* Enhanced mobile styles */
+        @media (max-width: 768px) {
+            .schedule-bar {
+                font-size: 0.6rem;
+                height: 30px;
+                top: 10px;
+            }
+            
+            .machine-label {
+                font-size: 0.75rem;
+                height: 45px;
+            }
+            
+            .timeline-row {
+                height: 45px;
+            }
+            
+            .hour-slot {
+                font-size: 0.7rem;
+            }
+        }
+
+        /* High contrast mode */
+        @media (prefers-contrast: high) {
+            .schedule-bar {
+                border: 2px solid #000;
+            }
+            
+            .machine-label {
+                border-bottom: 2px solid #000;
+            }
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            .schedule-bar, .filter-btn, .machine-label {
+                transition: none;
+            }
+            
+            .loading {
+                animation: none;
+            }
+        }
+    </style>
+</body>
+</html>
