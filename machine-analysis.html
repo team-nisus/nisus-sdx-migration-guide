@@ -710,8 +710,8 @@
             
             // Uptime değerlendirmesi
             const uptimeDays = parseInt(machine.uptime);
-            if (uptimeDays < 10) criticalCount++;
-            else if (uptimeDays < 25) warningCount++;
+            if (uptimeDays > 30) criticalCount++;
+            else if (uptimeDays > 14 && uptimeDays < 30) warningCount++;
             
             // Bağlantı sorunları
             if (machine.uipath.includes('No connection') || machine.uipath.includes('beta')) {
@@ -745,7 +745,7 @@
                 
                 // Uptime durumu
                 const uptimeDays = parseInt(machine.uptime);
-                const uptimeStatus = uptimeDays >= 30 ? 'status-good' : uptimeDays >= 14 ? 'status-warning' : 'status-critical';
+                const uptimeStatus = uptimeDays <= 14 ? 'status-good' : uptimeDays > 14 && uptimeDays < 30 ? 'status-warning' : 'status-critical';
                 
                 row.innerHTML = `
                     <td><div class="machine-name">${machine.hostname}</div></td>
